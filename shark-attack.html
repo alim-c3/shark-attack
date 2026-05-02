@@ -85,6 +85,14 @@
         align-items: stretch;
       }
 
+      .details-below {
+        margin-top: 4px;
+        color: #f5f8ff;
+        text-align: center;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
       .panel {
         flex: 1 1 150px;
         min-width: 150px;
@@ -589,36 +597,6 @@
   <body>
     <div class="wrap">
       <h1 class="title">Shark Attack</h1>
-      <div class="hud">
-        <div class="panel">
-          <div class="label">Score</div>
-          <div class="value" id="score">0</div>
-        </div>
-        <div class="panel">
-          <div class="label">Level</div>
-          <div class="value" id="level">1</div>
-        </div>
-        <div class="panel">
-          <div class="label">Fish</div>
-          <div class="value" id="fish-progress">0 / 3</div>
-        </div>
-        <div class="panel">
-          <div class="label">Best</div>
-          <div class="value" id="best-score">0</div>
-        </div>
-        <div class="panel">
-          <div class="label">Time</div>
-          <div class="value" id="run-time">0</div>
-        </div>
-        <div class="panel">
-          <div class="label">Difficulty</div>
-          <div class="value" id="difficulty">Easy</div>
-        </div>
-        <div class="panel">
-          <div class="label">Shark</div>
-          <div class="value" id="shark-name">Tiger</div>
-        </div>
-      </div>
       <div class="actions">
         <button id="pause" class="btn" type="button">Pause</button>
         <button id="end-run" class="btn" type="button">End run</button>
@@ -672,11 +650,42 @@
             <p class="small" id="result-sub"></p>
             <div class="result-actions">
               <button id="continue" class="btn" type="button">Play again</button>
-              <button id="back-to-menu" class="btn" type="button">Change shark</button>
+            <button id="back-to-menu" class="btn" type="button">Change shark</button>
             </div>
           </div>
         </div>
       </div>
+      <div class="hud">
+        <div class="panel">
+          <div class="label">Score</div>
+          <div class="value" id="score">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Level</div>
+          <div class="value" id="level">1</div>
+        </div>
+        <div class="panel">
+          <div class="label">Fish</div>
+          <div class="value" id="fish-progress">0 / 3</div>
+        </div>
+        <div class="panel">
+          <div class="label">Best</div>
+          <div class="value" id="best-score">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Time</div>
+          <div class="value" id="run-time">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Difficulty</div>
+          <div class="value" id="difficulty">Easy</div>
+        </div>
+        <div class="panel">
+          <div class="label">Shark</div>
+          <div class="value" id="shark-name">Tiger</div>
+        </div>
+      </div>
+      <p class="details-below" id="stats-details"></p>
       <div class="pad">
         <button id="up" type="button" aria-label="Move up">↑</button>
         <button id="left" type="button" aria-label="Move left">←</button>
@@ -695,6 +704,7 @@
       const runTimeEl = document.getElementById('run-time')
       const difficultyEl = document.getElementById('difficulty')
       const sharkNameEl = document.getElementById('shark-name')
+      const statsDetailsEl = document.getElementById('stats-details')
       const warningEl = document.getElementById('warning')
       const menu = document.getElementById('menu')
       const overlay = document.getElementById('overlay')
@@ -1384,6 +1394,21 @@
         const tier = difficultyTiers[state.difficulty] || difficultyTiers.medium
         difficultyEl.textContent = `${tier.label} · ${state.fishGoalMultiplier}x fish · ${state.fishSpeedMultiplier}x fish speed`
         sharkNameEl.textContent = sharkCatalog[state.selectedShark].name
+        let orcaTimer = 'Press start to begin'
+        if (state.running) {
+          if (state.orcaSpawned) {
+            orcaTimer = 'Orca is hunting'
+          } else if (state.levelStart || state.runStart) {
+            orcaTimer = `Orca starts in ${Math.max(
+              0,
+              Math.ceil((ORCA_SPAWN_DELAY_MS - (performance.now() - (state.levelStart || state.runStart))) / 1000),
+            )}s`
+          } else {
+            orcaTimer = 'Orca starts in 20s'
+          }
+        }
+        const chainText = state.chain > 1 ? ` · Chain ${state.chain}` : ''
+        statsDetailsEl.textContent = `Total fish ${state.fishTotal} · Remaining ${Math.max(0, state.fish.length)}${chainText} · ${orcaTimer}`
       }
 
       function moveFish() {
