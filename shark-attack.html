@@ -384,11 +384,18 @@
         display: none;
         margin-top: 12px;
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
+        gap: 12px;
         width: min(280px, 86vw);
         margin-left: auto;
         margin-right: auto;
         touch-action: none;
+        justify-content: center;
+        justify-items: center;
+        align-items: center;
+        grid-template-areas:
+          ". up ."
+          "left . right"
+          ". down .";
       }
 
       .pad button {
@@ -404,14 +411,25 @@
         min-width: 68px;
         user-select: none;
         -webkit-user-select: none;
+        width: 100%;
+        max-width: 78px;
       }
 
-      .pad button:nth-child(2) {
-        grid-column: 2;
+      #up {
+        grid-area: up;
       }
 
-      .pad button:nth-child(3) {
-        grid-column: 3;
+      #left {
+        grid-area: left;
+      }
+
+      #down {
+        grid-area: down;
+      }
+
+      #right {
+        grid-area: right;
+      }
       }
 
       .pad button:active {
@@ -451,7 +469,7 @@
         .pad {
           display: grid;
           width: min(320px, 94vw);
-          gap: 12px;
+          max-width: 320px;
           margin-top: 14px;
         }
 
@@ -747,8 +765,8 @@
       function dimensionsForLevel(level) {
         const growth = Math.floor((level - 1) / 2)
         const compact = window.innerWidth < 860
-        let rows = (compact ? 19 : 29) + growth * 2
-        let cols = (compact ? 24 : 50) + growth * 2
+        let rows = (compact ? 15 : 29) + growth * 2
+        let cols = (compact ? 18 : 50) + growth * 2
         if (rows % 2 === 0) rows += 1
         if (cols % 2 === 0) cols += 1
         return { rows, cols }
@@ -768,12 +786,12 @@
 
         const compact = window.innerWidth < 860
         const viewHeight = window.visualViewport && window.visualViewport.height ? window.visualViewport.height : window.innerHeight
-        const reservedHeight = compact ? 300 : 360
+        const reservedHeight = 360
         const availableHeight = Math.max(160, viewHeight - reservedHeight)
         const cellByWidth = boardWrap.clientWidth / cols
         const cellByHeight = availableHeight / rows
-        const minCell = compact ? 18 : 16
-        const maxCell = compact ? 34 : 48
+        const minCell = compact ? 11 : 16
+        const maxCell = compact ? 24 : 48
         const cellX = Math.floor(Math.max(minCell, Math.min(maxCell, Math.min(cellByWidth, cellByHeight))))
 
         board.style.gridTemplateColumns = `repeat(${cols}, var(--size))`
@@ -1002,7 +1020,7 @@
       }
 
       function render() {
-        warningEl.textContent = 'Drive your shark to every fish. Fish move slowly, so stay sharp.'
+        warningEl.textContent = ''
 
         for (let y = 0; y < state.rows; y++) {
           for (let x = 0; x < state.cols; x++) {
