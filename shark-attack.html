@@ -271,6 +271,10 @@
         animation: pulse 0.8s ease-in-out infinite;
       }
 
+      .tile.fish.red .entity {
+        filter: hue-rotate(325deg) saturate(1.8) brightness(1.12) drop-shadow(0 4px 6px rgba(160, 0, 0, 0.35));
+      }
+
       .tile.fish .entity::before {
         content: "";
         position: absolute;
@@ -944,13 +948,19 @@
           let candidate = randomOpenFromSet(reachable, exclude)
           if (!candidate) return false
           let retries = 0
-          while (retries < 22 && (manhattan(candidate, state.player) < 2 || manhattan(candidate, zone) > 4 && manhattan(candidate, zone) < 12)) {
+        while (retries < 22 && (manhattan(candidate, state.player) < 2 || manhattan(candidate, zone) > 4 && manhattan(candidate, zone) < 12)) {
             candidate = randomOpenFromSet(reachable, exclude)
             retries++
             if (!candidate) break
           }
           if (!candidate) return false
-          state.fish.push({ x: candidate.x, y: candidate.y })
+          const isRed = i === 0
+          state.fish.push({
+            x: candidate.x,
+            y: candidate.y,
+            kind: isRed ? 'red' : 'normal',
+            valueMultiplier: isRed ? 5 : 1,
+          })
           exclude.add(idx(candidate.x, candidate.y))
           guard++
           if (guard > 500) return false
@@ -1040,6 +1050,7 @@
         for (const fish of state.fish) {
           const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
           fishTile.classList.add('fish')
+          fishTile.classList.toggle('red', fish.kind === 'red')
           fishTile.innerHTML = '<span class="entity"></span>'
         }
 
@@ -1098,7 +1109,7 @@
           const tied = options.filter((p) => p.distance === top.distance && p.escape === top.escape)
           const selected = tied[randomInt(tied.length)]
           const key = idx(selected.x, selected.y)
-          nextFish.push({ x: selected.x, y: selected.y })
+          nextFish.push({ ...fish, x: selected.x, y: selected.y })
           pending.add(key)
         }
 
@@ -1110,11 +1121,13 @@
         if (index === -1) return false
 
         const shark = sharkCatalog[state.selectedShark]
+        const caught = state.fish[index]
         state.fish.splice(index, 1)
         state.fishCaught += 1
         state.fishTotal += 1
         state.chain += 1
-        state.fishScore += 24 + state.level * 4 + shark.fishBonus + state.chain
+        const reward = 24 + state.level * 4 + shark.fishBonus + state.chain
+        state.fishScore += reward * (caught.valueMultiplier || 1)
 
         if (state.fish.length === 0) {
           state.running = false
