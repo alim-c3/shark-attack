@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <title>Shark Attack</title>
     <style>
       :root {
@@ -30,6 +33,7 @@
       body {
         margin: 0;
         min-height: 100%;
+        height: 100%;
         overflow-x: hidden;
       }
 
@@ -50,6 +54,8 @@
           radial-gradient(circle at 100% 24%, rgba(255, 255, 255, 0.12), transparent 34%),
           linear-gradient(180deg, var(--water-light), #02688d 36%, var(--water-dark));
         height: auto;
+        touch-action: pan-y;
+        -webkit-text-size-adjust: 100%;
       }
 
       .wrap {
@@ -59,6 +65,7 @@
         flex-direction: column;
         gap: 12px;
         padding-bottom: 12px;
+        padding-inline: 12px;
       }
 
       .title {
@@ -103,6 +110,12 @@
         display: flex;
         gap: 8px;
         align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .actions .btn {
+        flex: 1 1 120px;
+        min-height: 44px;
       }
 
       .btn {
@@ -131,6 +144,13 @@
         box-shadow:
           inset 0 0 0 3px rgba(255, 255, 255, 0.08),
           0 14px 32px rgba(0, 0, 0, 0.45);
+        touch-action: none;
+      }
+
+      .board {
+        width: 100%;
+        justify-content: center;
+        align-items: center;
       }
 
       .board {
@@ -368,6 +388,7 @@
         width: min(280px, 86vw);
         margin-left: auto;
         margin-right: auto;
+        touch-action: none;
       }
 
       .pad button {
@@ -376,9 +397,13 @@
         padding: 16px 0;
         background: linear-gradient(180deg, #f2da84, #e9a14f);
         font-family: inherit;
-        font-size: 22px;
+        font-size: 26px;
         font-weight: 700;
         color: #122f45;
+        min-height: 68px;
+        min-width: 68px;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .pad button:nth-child(2) {
@@ -406,8 +431,33 @@
       }
 
       @media (max-width: 760px) {
+        .title {
+          font-size: clamp(26px, 8vw, 38px);
+        }
+
+        .panel {
+          min-width: 96px;
+          padding: 8px 10px;
+        }
+
+        .panel .value {
+          font-size: 18px;
+        }
+
+        .panel .label {
+          font-size: 12px;
+        }
+
         .pad {
           display: grid;
+          width: min(320px, 94vw);
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .pad button {
+          min-height: 76px;
+          font-size: 30px;
         }
 
         .shark-grid {
@@ -518,10 +568,10 @@
         </div>
       </div>
       <div class="pad">
-        <button id="up" type="button">Up</button>
-        <button id="left" type="button">Left</button>
-        <button id="down" type="button">Down</button>
-        <button id="right" type="button">Right</button>
+        <button id="up" type="button" aria-label="Move up">↑</button>
+        <button id="left" type="button" aria-label="Move left">←</button>
+        <button id="down" type="button" aria-label="Move down">↓</button>
+        <button id="right" type="button" aria-label="Move right">→</button>
       </div>
     </div>
 
@@ -641,6 +691,8 @@
         turnCooldown: 0,
       }
 
+      let lastTouch = null
+
       function idx(x, y) {
         return `${x},${y}`
       }
@@ -695,8 +747,8 @@
       function dimensionsForLevel(level) {
         const growth = Math.floor((level - 1) / 2)
         const compact = window.innerWidth < 860
-        let rows = (compact ? 21 : 29) + growth * 2
-        let cols = (compact ? 32 : 50) + growth * 2
+        let rows = (compact ? 19 : 29) + growth * 2
+        let cols = (compact ? 24 : 50) + growth * 2
         if (rows % 2 === 0) rows += 1
         if (cols % 2 === 0) cols += 1
         return { rows, cols }
@@ -714,10 +766,13 @@
         state.tileEls = []
         board.innerHTML = ''
 
-                const cellByWidth = (window.innerWidth - 110) / cols
-        const cellByHeight = (window.innerHeight - 330) / rows
         const compact = window.innerWidth < 860
-        const minCell = compact ? 12 : 16
+        const viewHeight = window.visualViewport && window.visualViewport.height ? window.visualViewport.height : window.innerHeight
+        const reservedHeight = compact ? 300 : 360
+        const availableHeight = Math.max(160, viewHeight - reservedHeight)
+        const cellByWidth = boardWrap.clientWidth / cols
+        const cellByHeight = availableHeight / rows
+        const minCell = compact ? 18 : 16
         const maxCell = compact ? 34 : 48
         const cellX = Math.floor(Math.max(minCell, Math.min(maxCell, Math.min(cellByWidth, cellByHeight))))
 
@@ -920,6 +975,30 @@
         state.playerMoveEvery = Math.max(1, basePlayer)
         const baseFish = 9 - Math.floor(shark.speed / 2)
         state.fishMoveEvery = Math.max(3, baseFish + Math.floor(state.level / 2))
+      }
+
+      function queueTouchDirection(event) {
+        const touch = event.touches && event.touches[0] ? event.touches[0] : null
+        if (!touch) return
+        lastTouch = { x: touch.clientX, y: touch.clientY }
+      }
+
+      function applyTouchDirection(event) {
+        if (!lastTouch) return
+        const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : null
+        if (!touch) return
+        const dx = touch.clientX - lastTouch.x
+        const dy = touch.clientY - lastTouch.y
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          if (Math.abs(dx) > 18) setDir(dx > 0 ? 'right' : 'left')
+        } else {
+          if (Math.abs(dy) > 18) setDir(dy > 0 ? 'down' : 'up')
+        }
+        lastTouch = null
+      }
+
+      function clearTouchDirection() {
+        lastTouch = null
       }
 
       function render() {
@@ -1130,14 +1209,41 @@
         setDir(target)
       })
 
-      upBtn.addEventListener('click', () => setDir('up'))
-      downBtn.addEventListener('click', () => setDir('down'))
-      leftBtn.addEventListener('click', () => setDir('left'))
-      rightBtn.addEventListener('click', () => setDir('right'))
+      const bindControl = (button, direction) => {
+        const fire = (event) => {
+          event.preventDefault()
+          if (!state.running) return
+          setDir(direction)
+        }
+        button.addEventListener('click', fire)
+        button.addEventListener('pointerdown', fire)
+        button.addEventListener('touchstart', fire, { passive: false })
+      }
 
-      ;[{ el: upBtn, dir: 'up' }, { el: downBtn, dir: 'down' }, { el: leftBtn, dir: 'left' }, { el: rightBtn, dir: 'right' }].forEach((entry) => {
-        entry.el.addEventListener('touchstart', () => setDir(entry.dir), { passive: true })
-      })
+      bindControl(upBtn, 'up')
+      bindControl(downBtn, 'down')
+      bindControl(leftBtn, 'left')
+      bindControl(rightBtn, 'right')
+
+      board.addEventListener(
+        'touchstart',
+        (event) => {
+          if (!state.running || state.awaitingNext || state.paused) return
+          event.preventDefault()
+          queueTouchDirection(event)
+        },
+        { passive: false },
+      )
+      board.addEventListener(
+        'touchend',
+        (event) => {
+          if (!state.running || state.awaitingNext || state.paused) return
+          event.preventDefault()
+          applyTouchDirection(event)
+        },
+        { passive: false },
+      )
+      board.addEventListener('touchcancel', clearTouchDirection, { passive: true })
 
       startButton.addEventListener('click', startRun)
       startEasyButton.addEventListener('click', startRun)
