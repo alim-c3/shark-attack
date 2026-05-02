@@ -91,6 +91,7 @@
         text-align: center;
         font-size: 14px;
         line-height: 1.35;
+        min-height: 1.4em;
       }
 
       .panel {
@@ -522,6 +523,20 @@
         color: #bcd3e8;
       }
 
+      .setting-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #d4ecff;
+        font-size: 14px;
+      }
+
+      .setting-check input[type='checkbox'] {
+        accent-color: #7de2ff;
+        width: 18px;
+        height: 18px;
+      }
+
       @media (max-width: 760px) {
         .title {
           font-size: clamp(26px, 8vw, 38px);
@@ -635,6 +650,13 @@
                 <option value="0.75">Fast</option>
               </select>
             </div>
+            <div class="setting-row">
+              <label>Easy mode</label>
+              <label class="setting-check">
+                <input type="checkbox" id="easy-mode-toggle" />
+                Calmer maze and less pressure
+              </label>
+            </div>
             <p class="menu-note" id="shark-note">Pick a shark then press start. Use arrows or WASD, with touch arrows on phone.</p>
             <div class="result-actions">
               <button id="start-run" class="btn" type="button">Start run</button>
@@ -673,6 +695,10 @@
           <div class="value" id="best-score">0</div>
         </div>
         <div class="panel">
+          <div class="label">Lives</div>
+          <div class="value" id="lives">2</div>
+        </div>
+        <div class="panel">
           <div class="label">Time</div>
           <div class="value" id="run-time">0</div>
         </div>
@@ -686,6 +712,7 @@
         </div>
       </div>
       <p class="details-below" id="stats-details"></p>
+      <p class="details-below" id="run-feedback"></p>
       <div class="pad">
         <button id="up" type="button" aria-label="Move up">↑</button>
         <button id="left" type="button" aria-label="Move left">←</button>
@@ -701,10 +728,12 @@
       const levelEl = document.getElementById('level')
       const fishProgressEl = document.getElementById('fish-progress')
       const bestScoreEl = document.getElementById('best-score')
+      const livesEl = document.getElementById('lives')
       const runTimeEl = document.getElementById('run-time')
       const difficultyEl = document.getElementById('difficulty')
       const sharkNameEl = document.getElementById('shark-name')
       const statsDetailsEl = document.getElementById('stats-details')
+      const feedbackEl = document.getElementById('run-feedback')
       const warningEl = document.getElementById('warning')
       const menu = document.getElementById('menu')
       const overlay = document.getElementById('overlay')
@@ -724,6 +753,7 @@
       const difficultySelect = document.getElementById('difficulty-select')
       const fishGoalSelect = document.getElementById('fish-goal-select')
       const fishSpeedSelect = document.getElementById('fish-speed-select')
+      const easyModeToggle = document.getElementById('easy-mode-toggle')
       const upBtn = document.getElementById('up')
       const downBtn = document.getElementById('down')
       const leftBtn = document.getElementById('left')
@@ -731,6 +761,7 @@
 
       const baseLoopMs = 120
       const ORCA_SPAWN_DELAY_MS = 20000
+      const ORCA_SPAWN_DELAY_EASY_MS = 28000
       const directions = {
         up: { x: 0, y: -1 },
         down: { x: 0, y: 1 },
@@ -869,6 +900,7 @@
       const state = {
         selectedShark: 'tiger',
         difficulty: 'medium',
+        easyMode: false,
         fishGoalMultiplier: 1,
         fishSpeedMultiplier: 1,
         bestScore: 0,
@@ -894,11 +926,19 @@
         fish: [],
         fishMoveCounter: 0,
         fishMoveEvery: 7,
+        fishWallBypass: 0,
+        orcaPressure: 0,
         orca: null,
         orcaSpawned: false,
         orcaSpawnTime: 0,
         orcaMoveCounter: 0,
         orcaMoveEvery: 8,
+        orcaSpawnDelayMs: ORCA_SPAWN_DELAY_MS,
+        orcaWarned: false,
+        playerLives: 2,
+        playerStart: null,
+        feedbackText: '',
+        feedbackUntil: 0,
         playerMoveEvery: 2,
         currentDir: { x: 0, y: 0 },
         nextDir: { x: 0, y: 0 },
@@ -961,8 +1001,9 @@
       function dimensionsForLevel(level) {
         const growth = Math.floor((level - 1) / 2)
         const compact = window.innerWidth < 860
-        let rows = (compact ? 15 : 13) + growth
-        let cols = (compact ? 18 : 25) + growth
+        const ease = state.easyMode ? -1 : 0
+        let rows = (compact ? 15 : 13) + growth + ease
+        let cols = (compact ? 18 : 25) + growth + ease
         if (rows % 2 === 0) rows += 1
         if (cols % 2 === 0) cols += 1
         return { rows, cols }
@@ -979,6 +1020,16 @@
         state.difficulty = difficultySelect.value || 'medium'
         state.fishGoalMultiplier = Number(fishGoalSelect.value || 1)
         state.fishSpeedMultiplier = Number(fishSpeedSelect.value || 1)
+        state.easyMode = easyModeToggle.checked
+      }
+
+      function applyEntityScale() {
+        const sharkSize = state.easyMode ? 220 : 240
+        const fishSize = state.easyMode ? 205 : 225
+        const orcaSize = state.easyMode ? 220 : 235
+        board.style.setProperty('--shark-size', `${sharkSize}%`)
+        board.style.setProperty('--fish-size', `${fishSize}%`)
+        board.style.setProperty('--orca-size', `${orcaSize}%`)
       }
 
       function initBoardGrid() {
@@ -1001,6 +1052,7 @@
 
         board.style.gridTemplateColumns = `repeat(${cols}, var(--size))`
         board.style.setProperty('--size', `${cellX}px`)
+        applyEntityScale()
 
         for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
@@ -1110,6 +1162,16 @@
         }
       }
 
+      function carveSafeZone(center, radius = 1) {
+        for (let y = center.y - radius; y <= center.y + radius; y++) {
+          for (let x = center.x - radius; x <= center.x + radius; x++) {
+            if (inBounds(x, y)) {
+              state.maze[y][x] = 0
+            }
+          }
+        }
+      }
+
       function chooseZones(cellSet, count) {
         const list = [...cellSet]
         const zones = []
@@ -1134,6 +1196,9 @@
         const candidateStart = randomOpenFromSet(openSet)
         if (!candidateStart) return false
         state.player = candidateStart
+        state.playerStart = { ...candidateStart }
+        const bubble = Math.max(1, 2 - Math.floor(state.orcaPressure / 4))
+        carveSafeZone(state.player, state.easyMode ? bubble : Math.max(1, bubble - 1))
 
         const reachable = collectReachable(state.player)
         const need = fishGoal(state.level)
@@ -1161,6 +1226,7 @@
             y: candidate.y,
             kind: isRed ? 'red' : 'normal',
             valueMultiplier: isRed ? 5 : 1,
+            dir: { x: 0, y: 0 },
           })
           exclude.add(idx(candidate.x, candidate.y))
           guard++
@@ -1210,18 +1276,37 @@
         state.playerMoveEvery = Math.max(1, Math.round(basePlayer * tier.playerDelay))
         const baseFish = 9 - Math.floor(shark.speed / 2)
         const levelBoost = Math.floor(state.level / 2)
-        state.fishMoveEvery = Math.max(2, Math.round((baseFish + levelBoost) * tier.fishDelay * state.fishSpeedMultiplier))
+        const easyFishPenalty = state.easyMode ? 1.25 : 1
+        state.fishMoveEvery = Math.max(2, Math.round((baseFish + levelBoost) * tier.fishDelay * state.fishSpeedMultiplier * easyFishPenalty))
         const orcaMoveDelay = {
           easy: 2.7,
           medium: 2.2,
           hard: 1.8,
           extreme: 1.5,
         }
-        state.orcaMoveEvery = Math.max(3, Math.ceil(state.playerMoveEvery * (orcaMoveDelay[state.difficulty] || 2.2)))
+        const pressure = Math.min(5, state.orcaPressure || 0)
+        const pressureTighten = 1 - Math.min(0.35, pressure * 0.05)
+        let orcaMoveDelayValue = orcaMoveDelay[state.difficulty] || 2.2
+        if (state.easyMode) orcaMoveDelayValue *= 1.35
+        state.orcaMoveEvery = Math.max(3, Math.ceil(state.playerMoveEvery * orcaMoveDelayValue * pressureTighten))
+        state.orcaSpawnDelayMs = state.easyMode ? ORCA_SPAWN_DELAY_EASY_MS : ORCA_SPAWN_DELAY_MS
       }
 
       function spawnOrca() {
         if (!state.player || !state.maze.length) return
+        const best = selectOrcaSpawnPoint()
+        if (!best) return
+
+        state.orca = best
+        state.orcaSpawned = true
+        state.orcaSpawnTime = performance.now()
+        state.orcaWarned = false
+        state.orcaMoveCounter = 0
+        warningEl.textContent = 'An orca has entered the area and is hunting you.'
+      }
+
+      function selectOrcaSpawnPoint() {
+        if (!state.player || !state.maze.length) return null
         const reachable = collectReachable(state.player)
         const fishSet = new Set(state.fish.map((fish) => idx(fish.x, fish.y)))
         const playerKey = idx(state.player.x, state.player.y)
@@ -1238,23 +1323,38 @@
         }
 
         if (!options.length) return
+        const baseMinDistance = {
+          easy: 12,
+          medium: 10,
+          hard: 9,
+          extreme: 8,
+        }[state.difficulty || 'medium']
 
-        let best = options[0]
+        const tighten = Math.min(3, Math.floor((state.orcaPressure || 0) / 2))
+        const minDistance = Math.max(4, baseMinDistance - tighten)
+
+        const farSafe = options.filter((candidate) => manhattan(candidate, state.player) >= minDistance)
+        const candidateList = farSafe.length ? farSafe : options
+
+        let best = candidateList[0]
         let bestDistance = -1
-        for (const candidate of options) {
+        for (const candidate of candidateList) {
           const distance = manhattan(candidate, state.player)
           if (distance > bestDistance) {
             bestDistance = distance
             best = candidate
           }
         }
+        return best
+      }
 
-        state.orca = best
-        state.orcaSpawned = true
-        state.orcaSpawnTime = performance.now()
-        state.orcaMoveCounter = 0
-        if (!state.orcaMoveEvery) state.orcaMoveEvery = Math.max(2, Math.ceil(state.playerMoveEvery / 0.9))
-        warningEl.textContent = 'An orca has entered the area and is hunting you.'
+      function resetOrcaAfterLifeLoss() {
+        const pick = selectOrcaSpawnPoint()
+        if (pick) {
+          state.orca = pick
+          state.orcaWarned = false
+          state.orcaMoveCounter = 0
+        }
       }
 
       function moveOrca() {
@@ -1293,11 +1393,53 @@
 
       function checkOrcaCatch() {
         if (!state.orca || !state.player) return false
-        if (state.orca.x === state.player.x && state.orca.y === state.player.y) {
+        const distance = manhattan(state.orca, state.player)
+
+        if (distance <= 2 && !state.orcaWarned) {
+          state.orcaWarned = true
+          setFeedback(`Orca warning: ${distance === 1 ? 'very close' : 'closing in'} keep moving`, 1800)
+          return false
+        }
+
+        if (distance <= 2 && state.orcaWarned && distance > 0) {
+          return false
+        }
+
+        if (state.orcaWarned && distance === 0) {
+          if (state.playerLives > 1) {
+            loseLifeByOrca()
+            return false
+          }
           endRunByOrca()
           return true
         }
+
+        if (!state.orcaWarned) {
+          return false
+        }
+
+        if (distance > 3) {
+          state.orcaWarned = false
+        }
         return false
+      }
+
+      function loseLifeByOrca() {
+        state.playerLives -= 1
+        state.orcaWarned = false
+        setFeedback(`Shark escaped once. Lives left: ${state.playerLives}`, 1800)
+        warningEl.textContent = 'Orca caught you, but you still have one life.'
+        state.player = state.playerStart ? { ...state.playerStart } : { x: 1, y: 1 }
+        if (state.orca) {
+          resetOrcaAfterLifeLoss()
+        } else {
+          spawnOrca()
+        }
+      }
+
+      function setFeedback(message, ttlMs = 1300) {
+        state.feedbackText = message
+        state.feedbackUntil = performance.now() + ttlMs
       }
 
       function endRunByOrca() {
@@ -1394,6 +1536,7 @@
         const tier = difficultyTiers[state.difficulty] || difficultyTiers.medium
         difficultyEl.textContent = `${tier.label} · ${state.fishGoalMultiplier}x fish · ${state.fishSpeedMultiplier}x fish speed`
         sharkNameEl.textContent = sharkCatalog[state.selectedShark].name
+        livesEl.textContent = String(state.playerLives)
         let orcaTimer = 'Press start to begin'
         if (state.running) {
           if (state.orcaSpawned) {
@@ -1401,19 +1544,32 @@
           } else if (state.levelStart || state.runStart) {
             orcaTimer = `Orca starts in ${Math.max(
               0,
-              Math.ceil((ORCA_SPAWN_DELAY_MS - (performance.now() - (state.levelStart || state.runStart))) / 1000),
+              Math.ceil((state.orcaSpawnDelayMs - (performance.now() - (state.levelStart || state.runStart))) / 1000),
             )}s`
           } else {
-            orcaTimer = 'Orca starts in 20s'
+            orcaTimer = `Orca starts in ${Math.ceil(state.orcaSpawnDelayMs / 1000)}s`
           }
         }
         const chainText = state.chain > 1 ? ` · Chain ${state.chain}` : ''
         statsDetailsEl.textContent = `Total fish ${state.fishTotal} · Remaining ${Math.max(0, state.fish.length)}${chainText} · ${orcaTimer}`
+        const now = performance.now()
+        let feedback = ''
+        if (state.orca && state.player) {
+          const dist = manhattan(state.orca, state.player)
+          if (dist <= 2) {
+            feedback = `Orca warning: ${dist === 1 ? 'very close' : 'nearby'}`
+          }
+        }
+        if (state.feedbackText && now < state.feedbackUntil) {
+          feedback = state.feedbackText
+        }
+        feedbackEl.textContent = feedback
       }
 
       function moveFish() {
         const pending = new Set()
         const nextFish = []
+        const playerPos = state.player
 
         for (const fish of state.fish) {
           const occupied = new Set(state.fish.map((f) => idx(f.x, f.y)).filter((k) => !pending.has(k)))
@@ -1426,28 +1582,46 @@
             const key = idx(nx, ny)
             if (occupied.has(key) || pending.has(key)) continue
             let openAround = 0
+            let forwardPaths = 0
             for (const escape of Object.values(directions)) {
               const ex = nx + escape.x
               const ey = ny + escape.y
               if (!inBounds(ex, ey)) continue
               if (state.maze[ey][ex] === 0) openAround += 1
+              if (Math.abs(playerPos.x - ex) + Math.abs(playerPos.y - ey) > Math.abs(playerPos.x - fish.x) + Math.abs(playerPos.y - fish.y)) {
+                forwardPaths += 1
+              }
             }
-            options.push({ x: nx, y: ny, distance: manhattan({ x: nx, y: ny }, state.player), escape: openAround })
+            const isReverse = fish.dir && fish.dir.x === -dir.x && fish.dir.y === -dir.y
+            options.push({
+              x: nx,
+              y: ny,
+              distance: manhattan({ x: nx, y: ny }, playerPos),
+              escape: openAround,
+              forwardPaths,
+              isReverse,
+              dir: { x: dir.x, y: dir.y },
+            })
           }
           if (!options.length) {
-            nextFish.push({ ...fish })
+            nextFish.push({ ...fish, dir: fish.dir || { x: 0, y: 0 } })
             continue
           }
-          options.sort((a, b) => {
-            if (a.distance !== b.distance) return b.distance - a.distance
-            if (a.escape !== b.escape) return b.escape - a.escape
+          const movingOptions = options.filter((option) => !(option.isReverse && options.length > 1))
+          const bestSet = movingOptions.length ? movingOptions : options
+          bestSet.sort((a, b) => {
+            if (b.escape !== a.escape) return b.escape - a.escape
+            if (b.distance !== a.distance) return b.distance - a.distance
+            if (b.forwardPaths !== a.forwardPaths) return b.forwardPaths - a.forwardPaths
             return 0
           })
-          const top = options[0]
-          const tied = options.filter((p) => p.distance === top.distance && p.escape === top.escape)
+          const top = bestSet[0]
+          const tied = bestSet.filter(
+            (candidate) => candidate.escape === top.escape && candidate.distance === top.distance && candidate.forwardPaths === top.forwardPaths,
+          )
           const selected = tied[randomInt(tied.length)]
           const key = idx(selected.x, selected.y)
-          nextFish.push({ ...fish, x: selected.x, y: selected.y })
+          nextFish.push({ ...fish, x: selected.x, y: selected.y, dir: { ...selected.dir } })
           pending.add(key)
         }
 
@@ -1464,14 +1638,21 @@
         state.fishCaught += 1
         state.fishTotal += 1
         state.chain += 1
+        state.orcaPressure = Math.floor(state.fishTotal / 2)
         const reward = 24 + state.level * 4 + shark.fishBonus + state.chain
         state.fishScore += reward * (caught.valueMultiplier || 1)
+        if (state.chain > 1) {
+          setFeedback(`Nice combo x${state.chain}`)
+        } else {
+          setFeedback(`Fish caught`)
+        }
 
         if (state.fish.length === 0) {
           state.running = false
           state.awaitingNext = true
           state.levelScore += 35 + state.level * 20
           const levelText = `You caught ${state.fishCaught} fish on level ${state.level}`
+          setFeedback(`${levelText}. Area clear!`)
           const title = 'Area clear'
           resultTitle.textContent = title
           resultText.textContent = `${levelText}. Nice chase.`
@@ -1488,11 +1669,17 @@
         state.level = 1
         state.fishGoal = fishGoal(state.level)
         state.fishTotal = 0
+        state.fishWallBypass = 0
         state.fishScore = 0
         state.levelScore = 0
         state.score = 0
         state.fishCaught = 0
         state.chain = 0
+        state.orcaPressure = 0
+        state.playerLives = 2
+        state.orcaWarned = false
+        state.feedbackText = ''
+        state.feedbackUntil = 0
         state.runStart = performance.now()
         state.levelStart = performance.now()
         state.running = true
@@ -1565,7 +1752,11 @@
 
         attemptPlayerMove()
 
-        if (!state.orcaSpawned && (state.levelStart || state.runStart) && performance.now() - (state.levelStart || state.runStart) >= ORCA_SPAWN_DELAY_MS) {
+        if (
+          !state.orcaSpawned &&
+          (state.levelStart || state.runStart) &&
+          performance.now() - (state.levelStart || state.runStart) >= (state.orcaSpawnDelayMs || ORCA_SPAWN_DELAY_MS)
+        ) {
           spawnOrca()
         }
 
