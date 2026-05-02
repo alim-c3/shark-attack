@@ -21,6 +21,7 @@
         --tile-line: rgba(255, 255, 255, 0.06);
         --shark-size: 240%;
         --fish-size: 225%;
+        --orca-size: 235%;
         --shark-art: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgMTIwIiBmaWxsPSJub25lIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZiIgeDE9IjEwIiB5MT0iMzUiIHgyPSIyMTAiIHkyPSI4NSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWQ0ZWQ4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDAlIiBzdG9wLWNvbG9yPSIjMGVhNWU5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA3NTk4NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZmluIiB4MT0iMjAiIHkxPSIyMCIgeDI9IjEyMCIgeTI9IjYwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMzOGJkZjgiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDM2OWExIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8ZWxsaXBzZSBjeD0iOTUiIGN5PSI2MCIgcng9IjY4IiByeT0iMzIiIGZpbGw9InVybCgjZikiLz4KICA8ZWxsaXBzZSBjeD0iNTIiIGN5PSI2MiIgcng9IjQwIiByeT0iMjIiIGZpbGw9InVybCgjZmluKSIvPgogIDxlbGxpcHNlIGN4PSIxMzIiIGN5PSI1OCIgcng9IjIwIiByeT0iMTQiIGZpbGw9IiMzYjgyZjYiLz4KICA8ZWxsaXBzZSBjeD0iMTQ1IiBjeT0iNTMiIHJ4PSIxMiIgcnk9IjEwIiBmaWxsPSIjMDgyZjQ5IiBvcGFjaXR5PSIwLjQiLz4KICA8ZWxsaXBzZSBjeD0iMTU1IiBjeT0iNTUiIHJ4PSI4IiByeT0iMTAiIGZpbGw9IiNlMGYyZmUiLz4KICA8Y2lyY2xlIGN4PSIxNjAiIGN5PSI1NiIgcnI9IjIuNiIgZmlsbD0iIzA4MmY0OSIvPgogIDxsaW5lIHgxPSIxNjMiIHkxPSI1NCIgeDI9IjE2NSIgeTI9IjU0IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS4zIi8+CiAgPHBhdGggZD0iTTM0IDYyIFE4IDYyIDE4IDc4IFEyMiA3NCAzMCA3NFoiIGZpbGw9InVybCgjZikiLz4KICA8cGF0aCBkPSJNMTIyIDYyIFE1NSA3NCAxNDYgNjEgTDE5MCA0OSBRMTk2IDQ0IDE5MCA0MCBRMTgxIDM4IDE3MCA0MCBMMTIzIDU5WiIgZmlsbD0iI2ZiYmYyNCIvPgogIDxwYXRoIGQ9Ik0xOCA2NFE4IDY4IDEwIDc2IFExOCA4MCAyMyA3NFoiIGZpbGw9IiMwNzU5ODUiLz4KICA8ZWxsaXBzZSBjeD0iOTUiIGN5PSI2NSIgcng9IjcyIiByeT0iMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RiZWFmIiBzdHJva2Utb3BhY2l0eT0iMC40Ii8+CiAgPHBhdGggZD0iTTcyIDQ2Qzc1IDM0IDg0IDI2IDk3IDI2QzEwNSAyNiAxMTIgMzAgMTE4IDM3IiBzdHJva2U9IiNiYWU2ZmRkIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==");
         --fish-art: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTIwIiBmaWxsPSJub25lIj4KICA8ZWxsaXBzZSBjeD0iNzAiIGN5PSI2MCIgcng9IjQyIiByeT0iMjQiIGZpbGw9IiMyMmQzZWUiLz4KICA8ZWxsaXBzZSBjeD0iNzAiIGN5PSI2MCIgcng9IjM0IiByeT0iMTgiIGZpbGw9IiMwZWE1ZTkiLz4KICA8ZWxsaXBzZSBjeD0iOTYiIGN5PSI2MCIgcng9IjEyIiByeT0iMTIiIGZpbGw9IiMwNmI2ZDQiLz4KICA8cGF0aCBkPSJNNTIgNTJMMjYgNDRMMjIgNTBMNTAgNTIiIGZpbGw9IiM2N2U4ZjkiLz4KICA8cGF0aCBkPSJNODIgNDhMMTE4IDQ0TDExOCA2MEw4MiA1NloiIGZpbGw9IiM2N2U4ZjkiLz4KICA8cGF0aCBkPSJNMTE4IDU0TDE1MCA0N0wxNDQgNThMMTE4IDU4WiIgZmlsbD0iIzA2YjZkNCIvPgogIDxjaXJjbGUgY3g9Ijc4IiBjeT0iNTkiIHI9IjMiIGZpbGw9IiMwODJmNDkiLz4KICA8cGF0aCBkPSJNNjQgNjBRNjYgNTIgNzIgNTIiIHN0cm9rZT0iIzBjNGE2ZSIgc3Ryb2tlLXdpZHRoPSIyLjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMjIgNjBDMTMyIDYwIDEzMiA0NCAxNDQgNDRDMTU2IDQ0IDE1NiA3NiAxNDQgNzZDMTMyIDc2IDEzMiA2MCAxMjIgNjBaIiBmaWxsPSIjNGZjM2Y3Ii8+CiAgPHBhdGggZD0iTTE1MCA2MEMxNjQgNTggMTcwIDYwIDE3NiA2MUMxNzYgNTkgMTcwIDU2IDE1NiA1NloiIGZpbGw9IiM2N2U4ZjkiLz4KPC9zdmc+");
       }
@@ -214,7 +215,7 @@
       .tile.you .entity {
         width: var(--shark-size);
         height: var(--shark-size);
-        background-image: var(--shark-art);
+        background-image: var(--active-shark-art, var(--shark-art));
         border: 0;
         border-radius: 0;
         clip-path: none;
@@ -273,6 +274,43 @@
 
       .tile.fish.red .entity {
         filter: hue-rotate(325deg) saturate(1.8) brightness(1.12) drop-shadow(0 4px 6px rgba(160, 0, 0, 0.35));
+      }
+
+      .tile.orca .entity {
+        width: var(--orca-size);
+        height: var(--orca-size);
+        border: 0;
+        border-radius: 48% 52% 42% 58% / 58% 48% 52% 42%;
+        background: linear-gradient(180deg, #f7fbff 0 35%, #121722 35% 55%, #b3b9c6 55% 70%, #10131b 70%),
+          radial-gradient(circle at 32% 45%, #eef2f9 0 12%, #d6dde5 20%, transparent 20.5%);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        filter: none;
+        animation: bob 1.05s ease-in-out infinite;
+      }
+
+      .tile.orca .entity::before {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 8px;
+        left: 50%;
+        top: 34%;
+        transform: translateX(-20%) rotate(-20deg);
+        border-radius: 50% 35% 45% 65%;
+        background: #111;
+        box-shadow: 18px 0 0 #111;
+      }
+
+      .tile.orca .entity::after {
+        content: "";
+        position: absolute;
+        left: 16%;
+        top: 54%;
+        width: 38%;
+        height: 20%;
+        border-radius: 46% 60% 30% 46%;
+        background: #0f1117;
+        transform: rotate(24deg);
       }
 
       .tile.fish .entity::before {
@@ -682,11 +720,60 @@
       const rightBtn = document.getElementById('right')
 
       const baseLoopMs = 120
+      const ORCA_SPAWN_DELAY_MS = 20000
       const directions = {
         up: { x: 0, y: -1 },
         down: { x: 0, y: 1 },
         left: { x: -1, y: 0 },
         right: { x: 1, y: 0 },
+      }
+
+      function makeSharkArt(colors) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 120" fill="none"><path d="M28 60 C28 28 110 18 190 48 C200 58 198 62 186 73 C140 108 70 101 28 86Z" fill="${colors.body}"/><path d="M36 60 C45 35 100 22 170 52 C166 70 108 82 36 60Z" fill="${colors.accent}"/><path d="M196 53 L224 60 L196 67Z" fill="${colors.tail}"/><path d="M130 34 C150 20 170 22 188 30 L176 44C160 38 144 36 130 34Z" fill="${colors.fin}"/><path d="M114 78 C138 86 168 86 188 74L176 64C154 74 134 76 114 78Z" fill="${colors.fin}"/><ellipse cx="88" cy="60" rx="22" ry="16" fill="${colors.belly}"/><circle cx="74" cy="58" r="4" fill="${colors.eye}"/><circle cx="78" cy="59" r="1.5" fill="#fff"/><path d="M124 58C134 52 154 53 162 58C154 63 134 64 124 58Z" fill="rgba(255,255,255,0.5)"/></svg>`
+        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
+      }
+
+      const sharkArtByType = {
+        tiger: makeSharkArt({
+          body: '#f46a50',
+          accent: '#ffd86c',
+          belly: '#ffb48f',
+          fin: '#c84c36',
+          tail: '#9a3022',
+          eye: '#17304a',
+        }),
+        bull: makeSharkArt({
+          body: '#7a7d5f',
+          accent: '#c9cf99',
+          belly: '#c6d5ab',
+          fin: '#525a40',
+          tail: '#3b4534',
+          eye: '#1c232a',
+        }),
+        greatWhite: makeSharkArt({
+          body: '#cfd9dd',
+          accent: '#8ea4b4',
+          belly: '#f5f8fb',
+          fin: '#98a7af',
+          tail: '#7a8e9a',
+          eye: '#252f3a',
+        }),
+        hammerhead: makeSharkArt({
+          body: '#6fc4de',
+          accent: '#9de6ff',
+          belly: '#d2f2ff',
+          fin: '#2f6f86',
+          tail: '#215063',
+          eye: '#203845',
+        }),
+        lemon: makeSharkArt({
+          body: '#f5df6d',
+          accent: '#f2ecb2',
+          belly: '#fff9c2',
+          fin: '#d4b43f',
+          tail: '#a58f33',
+          eye: '#2a2a2a',
+        }),
       }
 
       const sharkCatalog = {
@@ -697,6 +784,7 @@
           turnDelay: 2,
           fishBonus: 4,
           blurb: 'Fast and smooth turns for active chases.',
+          art: sharkArtByType.tiger,
           longName: 'Tiger Shark',
         },
         bull: {
@@ -706,6 +794,7 @@
           turnDelay: 3,
           fishBonus: 2,
           blurb: 'Strong swimmer that pushes through larger openings.',
+          art: sharkArtByType.bull,
           longName: 'Bull Shark',
         },
         greatWhite: {
@@ -715,6 +804,7 @@
           turnDelay: 3,
           fishBonus: 5,
           blurb: 'Best score pacing with reliable movement.',
+          art: sharkArtByType.greatWhite,
           longName: 'Great White',
         },
         hammerhead: {
@@ -724,6 +814,7 @@
           turnDelay: 2,
           fishBonus: 3,
           blurb: 'Tight corridor control with very precise turns.',
+          art: sharkArtByType.hammerhead,
           longName: 'Hammerhead',
         },
         lemon: {
@@ -733,6 +824,7 @@
           turnDelay: 1,
           fishBonus: 3,
           blurb: 'Quick pivots and sharp acceleration in crowded water.',
+          art: sharkArtByType.lemon,
           longName: 'Lemon Shark',
         },
       }
@@ -778,6 +870,7 @@
         fishScore: 0,
         levelScore: 0,
         chain: 0,
+        levelStart: 0,
         running: false,
         paused: false,
         awaitingNext: false,
@@ -791,6 +884,11 @@
         fish: [],
         fishMoveCounter: 0,
         fishMoveEvery: 7,
+        orca: null,
+        orcaSpawned: false,
+        orcaSpawnTime: 0,
+        orcaMoveCounter: 0,
+        orcaMoveEvery: 8,
         playerMoveEvery: 2,
         currentDir: { x: 0, y: 0 },
         nextDir: { x: 0, y: 0 },
@@ -1084,6 +1182,11 @@
         state.fishGoal = fishGoal(state.level)
         state.fishCaught = 0
         state.fishMoveCounter = 0
+        state.orca = null
+        state.orcaSpawned = false
+        state.orcaSpawnTime = 0
+        state.orcaMoveCounter = 0
+        state.orcaMoveEvery = 0
         state.currentDir = { x: 0, y: 0 }
         state.nextDir = { x: 0, y: 0 }
         state.turnCooldown = 0
@@ -1098,6 +1201,96 @@
         const baseFish = 9 - Math.floor(shark.speed / 2)
         const levelBoost = Math.floor(state.level / 2)
         state.fishMoveEvery = Math.max(2, Math.round((baseFish + levelBoost) * tier.fishDelay * state.fishSpeedMultiplier))
+        state.orcaMoveEvery = Math.max(2, Math.ceil(state.playerMoveEvery / 0.9))
+      }
+
+      function spawnOrca() {
+        if (!state.player || !state.maze.length) return
+        const reachable = collectReachable(state.player)
+        const fishSet = new Set(state.fish.map((fish) => idx(fish.x, fish.y)))
+        const playerKey = idx(state.player.x, state.player.y)
+
+        let options = []
+        for (const key of reachable) {
+          if (key === playerKey || fishSet.has(key)) continue
+          const [x, y] = key.split(',').map(Number)
+          options.push({ x, y })
+        }
+
+        if (!options.length) {
+          options = collectOpenFromSet(reachable, new Set([playerKey]))
+        }
+
+        if (!options.length) return
+
+        let best = options[0]
+        let bestDistance = -1
+        for (const candidate of options) {
+          const distance = manhattan(candidate, state.player)
+          if (distance > bestDistance) {
+            bestDistance = distance
+            best = candidate
+          }
+        }
+
+        state.orca = best
+        state.orcaSpawned = true
+        state.orcaSpawnTime = performance.now()
+        state.orcaMoveCounter = 0
+        if (!state.orcaMoveEvery) state.orcaMoveEvery = Math.max(2, Math.ceil(state.playerMoveEvery / 0.9))
+        warningEl.textContent = 'An orca has entered the area and is hunting you.'
+      }
+
+      function moveOrca() {
+        if (!state.orca || !state.player) return
+        const candidates = []
+        for (const dir of Object.values(directions)) {
+          const nx = state.orca.x + dir.x
+          const ny = state.orca.y + dir.y
+          if (!inBounds(nx, ny)) continue
+          if (state.maze[ny][nx] === 1) continue
+          const distance = manhattan({ x: nx, y: ny }, state.player)
+          candidates.push({ x: nx, y: ny, distance })
+        }
+
+        if (!candidates.length) return
+
+        let bestDistance = candidates[0].distance
+        for (const candidate of candidates) {
+          if (candidate.distance < bestDistance) {
+            bestDistance = candidate.distance
+          }
+        }
+
+        const bestOptions = candidates.filter((candidate) => candidate.distance === bestDistance)
+        const chosen = bestOptions[randomInt(bestOptions.length)]
+        state.orca.x = chosen.x
+        state.orca.y = chosen.y
+      }
+
+      function checkOrcaCatch() {
+        if (!state.orca || !state.player) return false
+        if (state.orca.x === state.player.x && state.orca.y === state.player.y) {
+          endRunByOrca()
+          return true
+        }
+        return false
+      }
+
+      function endRunByOrca() {
+        state.running = false
+        state.paused = false
+        state.awaitingNext = false
+        state.orcaSpawned = false
+        warningEl.textContent = ''
+        if (state.score > state.bestScore) {
+          state.bestScore = state.score
+        }
+        bestScoreEl.textContent = String(state.bestScore)
+        resultTitle.textContent = 'Shark hunted'
+        resultText.textContent = `The orca has caught the shark on level ${state.level}.`
+        resultSub.textContent = `You can restart the run for a fresh chase.`
+        overlay.classList.add('show')
       }
 
       function queueTouchDirection(event) {
@@ -1150,9 +1343,20 @@
         }
 
         if (state.player) {
+          const shark = sharkCatalog[state.selectedShark]
           const playerTile = state.tileEls[tileIndex(state.player.x, state.player.y)]
           playerTile.classList.add('you', `you-${state.selectedShark}`)
           playerTile.innerHTML = '<span class="entity"></span>'
+          const entity = playerTile.querySelector('.entity')
+          if (entity && shark && shark.art) {
+            entity.style.backgroundImage = shark.art
+          }
+        }
+
+        if (state.orca) {
+          const orcaTile = state.tileEls[tileIndex(state.orca.x, state.orca.y)]
+          orcaTile.classList.add('orca')
+          orcaTile.innerHTML = '<span class="entity"></span>'
         }
       }
 
@@ -1252,6 +1456,7 @@
         state.fishCaught = 0
         state.chain = 0
         state.runStart = performance.now()
+        state.levelStart = performance.now()
         state.running = true
         state.paused = false
         state.awaitingNext = false
@@ -1284,6 +1489,7 @@
         state.awaitingNext = false
         state.level += 1
         state.fishCaught = 0
+        state.levelStart = performance.now()
         startLevel()
         overlay.classList.remove('show')
         render()
@@ -1321,12 +1527,27 @@
 
         attemptPlayerMove()
 
+        if (!state.orcaSpawned && (state.levelStart || state.runStart) && performance.now() - (state.levelStart || state.runStart) >= ORCA_SPAWN_DELAY_MS) {
+          spawnOrca()
+        }
+
         state.fishMoveCounter += 1
         if (state.fishMoveCounter >= state.fishMoveEvery) {
           state.fishMoveCounter = 0
           moveFish()
           if (collectIfOnFish()) {
             // caught a fish after fish repositioning
+          }
+        }
+
+        if (state.orcaSpawned && state.orca) {
+          state.orcaMoveCounter += 1
+          if (state.orcaMoveCounter >= state.orcaMoveEvery) {
+            state.orcaMoveCounter = 0
+            moveOrca()
+            if (checkOrcaCatch()) {
+              return
+            }
           }
         }
 
