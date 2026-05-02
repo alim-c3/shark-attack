@@ -523,6 +523,59 @@
         color: #bcd3e8;
       }
 
+      .fish-spawn-hint {
+        position: absolute;
+        left: 50%;
+        top: 16px;
+        transform: translateX(-50%);
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0;
+        background: rgba(8, 33, 54, 0.9);
+        border: 2px solid #8cd7ff;
+        color: #ddf2ff;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+        transition: opacity 0.25s ease;
+      }
+
+      .fish-spawn-hint.show {
+        opacity: 1;
+        animation: fishSpawnPulse 1.6s ease-in-out infinite;
+      }
+
+      .tile.fish.fish-coming .entity {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        animation: fishBubble 0.7s ease-out forwards;
+      }
+
+      @keyframes fishSpawnPulse {
+        0% {
+          transform: translate(-50%, 0) scale(0.97);
+        }
+        50% {
+          transform: translate(-50%, 0) scale(1.03);
+        }
+        100% {
+          transform: translate(-50%, 0) scale(0.97);
+        }
+      }
+
+      @keyframes fishBubble {
+        from {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0.2;
+        }
+        to {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+      }
+
       .setting-check {
         display: flex;
         align-items: center;
@@ -621,6 +674,7 @@
       <div class="board-wrap" id="boardWrap">
         <div id="board" class="board" aria-label="Shark Attack maze"></div>
         <div id="warning" class="small" style="position: absolute; left: 12px; top: 12px; color: #ffe8a7; text-shadow: 0 0 10px rgba(255, 216, 110, 0.35); z-index: 3"></div>
+        <div id="fish-spawn-hint" class="fish-spawn-hint">Fish coming soon</div>
         <div id="menu" class="screen show">
           <div class="panel-card">
             <h2>Choose your shark and start</h2>
@@ -699,6 +753,11 @@
           <div class="value" id="lives">2</div>
         </div>
         <div class="panel">
+          <div class="label">Shark power</div>
+          <div class="value" id="shark-power-icon">🦈</div>
+          <p class="small" id="shark-power-text" style="margin: 0; margin-top: 4px">Balanced hunter</p>
+        </div>
+        <div class="panel">
           <div class="label">Time</div>
           <div class="value" id="run-time">0</div>
         </div>
@@ -732,9 +791,12 @@
       const runTimeEl = document.getElementById('run-time')
       const difficultyEl = document.getElementById('difficulty')
       const sharkNameEl = document.getElementById('shark-name')
+      const sharkPowerIconEl = document.getElementById('shark-power-icon')
+      const sharkPowerTextEl = document.getElementById('shark-power-text')
       const statsDetailsEl = document.getElementById('stats-details')
       const feedbackEl = document.getElementById('run-feedback')
       const warningEl = document.getElementById('warning')
+      const fishSpawnHintEl = document.getElementById('fish-spawn-hint')
       const menu = document.getElementById('menu')
       const overlay = document.getElementById('overlay')
       const sharkGrid = document.getElementById('shark-grid')
@@ -762,6 +824,8 @@
       const baseLoopMs = 120
       const ORCA_SPAWN_DELAY_MS = 20000
       const ORCA_SPAWN_DELAY_EASY_MS = 28000
+      const FISH_SPAWN_DELAY_MS = 2200
+      const FISH_SPAWN_DELAY_EASY_MS = 2800
       const directions = {
         up: { x: 0, y: -1 },
         down: { x: 0, y: 1 },
@@ -870,6 +934,39 @@
         },
       }
 
+      const sharkPowerMap = {
+        tiger: {
+          icon: '⚡',
+          text: 'Burst Rush',
+        },
+        bull: {
+          icon: '🛡️',
+          text: 'Hard Impact',
+        },
+        greatWhite: {
+          icon: '👁️',
+          text: 'Wide Vision',
+        },
+        hammerhead: {
+          icon: '🎯',
+          text: 'Precise Turn',
+        },
+        lemon: {
+          icon: '🧭',
+          text: 'Tight Lanes',
+        },
+      }
+
+      function activeSharkPower() {
+        return sharkPowerMap[state.selectedShark] || { icon: '🦈', text: 'Balanced Hunter' }
+      }
+
+      function updateSharkPowerHUD() {
+        const power = activeSharkPower()
+        if (sharkPowerIconEl) sharkPowerIconEl.textContent = power.icon
+        if (sharkPowerTextEl) sharkPowerTextEl.textContent = power.text
+      }
+
       const difficultyTiers = {
         easy: {
           label: 'Easy',
@@ -939,6 +1036,11 @@
         playerStart: null,
         feedbackText: '',
         feedbackUntil: 0,
+        fishSpawnAt: 0,
+        fishSpawnPending: false,
+        fishSpawnDelayMs: FISH_SPAWN_DELAY_MS,
+        redFishCaught: 0,
+        runHighestLevel: 1,
         playerMoveEvery: 2,
         currentDir: { x: 0, y: 0 },
         nextDir: { x: 0, y: 0 },
@@ -996,6 +1098,7 @@
         Array.from(sharkGrid.children).forEach((button, index) => {
           button.classList.toggle('selected', index === order.indexOf(id))
         })
+        updateSharkPowerHUD()
       }
 
       function dimensionsForLevel(level) {
@@ -1021,6 +1124,40 @@
         state.fishGoalMultiplier = Number(fishGoalSelect.value || 1)
         state.fishSpeedMultiplier = Number(fishSpeedSelect.value || 1)
         state.easyMode = easyModeToggle.checked
+      }
+
+      function formatRunSummaryText() {
+        const elapsedMs = state.runStart ? performance.now() - state.runStart : 0
+        const totalSec = Math.max(0, Math.floor(elapsedMs / 1000))
+        const mins = Math.floor(totalSec / 60)
+        const secs = String(totalSec % 60).padStart(2, '0')
+        return `Fish caught: ${state.fishTotal} · Red fish: ${state.redFishCaught} · Time: ${mins}:${secs} · Lives: ${state.playerLives} · Best level: ${state.runHighestLevel}`
+      }
+
+      function queueFishArrival() {
+        state.fishSpawnDelayMs = state.easyMode ? FISH_SPAWN_DELAY_EASY_MS : FISH_SPAWN_DELAY_MS
+        state.fishSpawnAt = performance.now() + state.fishSpawnDelayMs
+        state.fishSpawnPending = true
+      }
+
+      function updateFishSpawnHint() {
+        if (!fishSpawnHintEl) return
+        if (state.fishSpawnPending && state.fishSpawnAt) {
+          const seconds = Math.max(0, Math.ceil((state.fishSpawnAt - performance.now()) / 1000))
+          fishSpawnHintEl.classList.add('show')
+          fishSpawnHintEl.textContent = `New fish arrive in ${seconds}s`
+        } else {
+          fishSpawnHintEl.classList.remove('show')
+          fishSpawnHintEl.textContent = ''
+        }
+      }
+
+      function activateFishWave() {
+        if (!state.fishSpawnPending) return
+        state.fishSpawnPending = false
+        state.fishSpawnAt = 0
+        updateFishSpawnHint()
+        setFeedback('New fish are in the water')
       }
 
       function applyEntityScale() {
@@ -1454,7 +1591,7 @@
         bestScoreEl.textContent = String(state.bestScore)
         resultTitle.textContent = 'Shark hunted'
         resultText.textContent = `The orca has caught the shark on level ${state.level}.`
-        resultSub.textContent = `You can restart the run for a fresh chase.`
+        resultSub.innerHTML = `You can restart the run for a fresh chase.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
         overlay.classList.add('show')
       }
 
@@ -1503,6 +1640,7 @@
         for (const fish of state.fish) {
           const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
           fishTile.classList.add('fish')
+          fishTile.classList.toggle('fish-coming', state.fishSpawnPending)
           fishTile.classList.toggle('red', fish.kind === 'red')
           fishTile.innerHTML = '<span class="entity"></span>'
         }
@@ -1532,11 +1670,14 @@
         bestScoreEl.textContent = String(state.bestScore)
         levelEl.textContent = String(state.level)
         fishProgressEl.textContent = `${state.fishCaught} / ${state.fishGoal}`
+        updateSharkPowerHUD()
         runTimeEl.textContent = `${elapsed}s`
         const tier = difficultyTiers[state.difficulty] || difficultyTiers.medium
         difficultyEl.textContent = `${tier.label} · ${state.fishGoalMultiplier}x fish · ${state.fishSpeedMultiplier}x fish speed`
-        sharkNameEl.textContent = sharkCatalog[state.selectedShark].name
+        const power = activeSharkPower()
+        sharkNameEl.textContent = `${sharkCatalog[state.selectedShark].name} ${power.icon}`
         livesEl.textContent = String(state.playerLives)
+        let fishTimer = state.fishSpawnPending ? `Fish in ${Math.max(0, Math.ceil((state.fishSpawnAt - performance.now()) / 1000))}s` : 'Fish active'
         let orcaTimer = 'Press start to begin'
         if (state.running) {
           if (state.orcaSpawned) {
@@ -1551,7 +1692,7 @@
           }
         }
         const chainText = state.chain > 1 ? ` · Chain ${state.chain}` : ''
-        statsDetailsEl.textContent = `Total fish ${state.fishTotal} · Remaining ${Math.max(0, state.fish.length)}${chainText} · ${orcaTimer}`
+        statsDetailsEl.textContent = `Total fish ${state.fishTotal} · Remaining ${Math.max(0, state.fish.length)}${chainText} · ${fishTimer} · ${orcaTimer}`
         const now = performance.now()
         let feedback = ''
         if (state.orca && state.player) {
@@ -1629,6 +1770,7 @@
       }
 
       function collectIfOnFish() {
+        if (state.fishSpawnPending) return false
         const index = state.fish.findIndex((fish) => fish.x === state.player.x && fish.y === state.player.y)
         if (index === -1) return false
 
@@ -1637,6 +1779,7 @@
         state.fish.splice(index, 1)
         state.fishCaught += 1
         state.fishTotal += 1
+        if (caught.kind === 'red') state.redFishCaught += 1
         state.chain += 1
         state.orcaPressure = Math.floor(state.fishTotal / 2)
         const reward = 24 + state.level * 4 + shark.fishBonus + state.chain
@@ -1680,19 +1823,25 @@
         state.orcaWarned = false
         state.feedbackText = ''
         state.feedbackUntil = 0
+        state.redFishCaught = 0
+        state.runHighestLevel = 1
         state.runStart = performance.now()
         state.levelStart = performance.now()
         state.running = true
         state.paused = false
         state.awaitingNext = false
+        state.fishSpawnPending = false
+        state.fishSpawnAt = 0
         state.tick = 0
         pauseButton.textContent = 'Pause'
         menu.classList.remove('show')
         overlay.classList.remove('show')
 
         startLevel()
+        queueFishArrival()
         render()
         updateHUD()
+        updateFishSpawnHint()
       }
 
       function endRun() {
@@ -1705,7 +1854,7 @@
         bestScoreEl.textContent = String(state.bestScore)
         resultTitle.textContent = 'Run ended'
         resultText.textContent = `You ended the run on level ${state.level}.`
-        resultSub.textContent = `You can keep fish count, speed, and difficulty for another run.`
+        resultSub.innerHTML = `You can keep fish count, speed, and difficulty for another run.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
         overlay.classList.add('show')
       }
 
@@ -1713,9 +1862,13 @@
         if (!state.awaitingNext) return
         state.awaitingNext = false
         state.level += 1
+        if (state.level > state.runHighestLevel) state.runHighestLevel = state.level
         state.fishCaught = 0
         state.levelStart = performance.now()
+        state.fishSpawnPending = false
+        state.fishSpawnAt = 0
         startLevel()
+        queueFishArrival()
         overlay.classList.remove('show')
         render()
         updateHUD()
@@ -1750,6 +1903,10 @@
 
         if (state.turnCooldown > 0) state.turnCooldown -= 1
 
+        if (state.fishSpawnPending && performance.now() >= state.fishSpawnAt) {
+          activateFishWave()
+        }
+
         attemptPlayerMove()
 
         if (
@@ -1761,7 +1918,7 @@
         }
 
         state.fishMoveCounter += 1
-        if (state.fishMoveCounter >= state.fishMoveEvery) {
+        if (!state.fishSpawnPending && state.fishMoveCounter >= state.fishMoveEvery) {
           state.fishMoveCounter = 0
           moveFish()
           if (collectIfOnFish()) {
@@ -1782,6 +1939,7 @@
 
         render()
         updateHUD()
+        updateFishSpawnHint()
       }
 
       window.addEventListener('keydown', (event) => {
@@ -1888,10 +2046,12 @@
         buildSharkMenu()
         menu.classList.add('show')
         overlay.classList.remove('show')
+        updateSharkPowerHUD()
         initBoardGrid()
         clearToWalls()
         render()
         updateHUD()
+        updateFishSpawnHint()
         state.timer = setInterval(tick, baseLoopMs)
       }
 
