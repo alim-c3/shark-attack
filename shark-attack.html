@@ -1,0 +1,1209 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shark Attack</title>
+    <style>
+      :root {
+        --water-dark: #063f5d;
+        --water-mid: #0f6996;
+        --water-light: #3fb0d6;
+        --wall: #08283d;
+        --wall-2: #041f31;
+        --reef: #15435b;
+        --fish: #ffde58;
+        --you: #ff6f5a;
+        --glow: #ffd76d;
+        --tile-line: rgba(255, 255, 255, 0.06);
+        --shark-size: 180%;
+        --fish-size: 135%;
+        --shark-art: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgMTIwIiBmaWxsPSJub25lIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZiIgeDE9IjEwIiB5MT0iMzUiIHgyPSIyMTAiIHkyPSI4NSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWQ0ZWQ4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDAlIiBzdG9wLWNvbG9yPSIjMGVhNWU5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA3NTk4NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZmluIiB4MT0iMjAiIHkxPSIyMCIgeDI9IjEyMCIgeTI9IjYwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMzOGJkZjgiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDM2OWExIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8ZWxsaXBzZSBjeD0iOTUiIGN5PSI2MCIgcng9IjY4IiByeT0iMzIiIGZpbGw9InVybCgjZikiLz4KICA8ZWxsaXBzZSBjeD0iNTIiIGN5PSI2MiIgcng9IjQwIiByeT0iMjIiIGZpbGw9InVybCgjZmluKSIvPgogIDxlbGxpcHNlIGN4PSIxMzIiIGN5PSI1OCIgcng9IjIwIiByeT0iMTQiIGZpbGw9IiMzYjgyZjYiLz4KICA8ZWxsaXBzZSBjeD0iMTQ1IiBjeT0iNTMiIHJ4PSIxMiIgcnk9IjEwIiBmaWxsPSIjMDgyZjQ5IiBvcGFjaXR5PSIwLjQiLz4KICA8ZWxsaXBzZSBjeD0iMTU1IiBjeT0iNTUiIHJ4PSI4IiByeT0iMTAiIGZpbGw9IiNlMGYyZmUiLz4KICA8Y2lyY2xlIGN4PSIxNjAiIGN5PSI1NiIgcnI9IjIuNiIgZmlsbD0iIzA4MmY0OSIvPgogIDxsaW5lIHgxPSIxNjMiIHkxPSI1NCIgeDI9IjE2NSIgeTI9IjU0IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS4zIi8+CiAgPHBhdGggZD0iTTM0IDYyIFE4IDYyIDE4IDc4IFEyMiA3NCAzMCA3NFoiIGZpbGw9InVybCgjZikiLz4KICA8cGF0aCBkPSJNMTIyIDYyIFE1NSA3NCAxNDYgNjEgTDE5MCA0OSBRMTk2IDQ0IDE5MCA0MCBRMTgxIDM4IDE3MCA0MCBMMTIzIDU5WiIgZmlsbD0iI2ZiYmYyNCIvPgogIDxwYXRoIGQ9Ik0xOCA2NFE4IDY4IDEwIDc2IFExOCA4MCAyMyA3NFoiIGZpbGw9IiMwNzU5ODUiLz4KICA8ZWxsaXBzZSBjeD0iOTUiIGN5PSI2NSIgcng9IjcyIiByeT0iMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RiZWFmIiBzdHJva2Utb3BhY2l0eT0iMC40Ii8+CiAgPHBhdGggZD0iTTcyIDQ2Qzc1IDM0IDg0IDI2IDk3IDI2QzEwNSAyNiAxMTIgMzAgMTE4IDM3IiBzdHJva2U9IiNiYWU2ZmRkIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==");
+        --fish-art: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTIwIiBmaWxsPSJub25lIj4KICA8ZWxsaXBzZSBjeD0iNzAiIGN5PSI2MCIgcng9IjQyIiByeT0iMjQiIGZpbGw9IiMyMmQzZWUiLz4KICA8ZWxsaXBzZSBjeD0iNzAiIGN5PSI2MCIgcng9IjM0IiByeT0iMTgiIGZpbGw9IiMwZWE1ZTkiLz4KICA8ZWxsaXBzZSBjeD0iOTYiIGN5PSI2MCIgcng9IjEyIiByeT0iMTIiIGZpbGw9IiMwNmI2ZDQiLz4KICA8cGF0aCBkPSJNNTIgNTJMMjYgNDRMMjIgNTBMNTAgNTIiIGZpbGw9IiM2N2U4ZjkiLz4KICA8cGF0aCBkPSJNODIgNDhMMTE4IDQ0TDExOCA2MEw4MiA1NloiIGZpbGw9IiM2N2U4ZjkiLz4KICA8cGF0aCBkPSJNMTE4IDU0TDE1MCA0N0wxNDQgNThMMTE4IDU4WiIgZmlsbD0iIzA2YjZkNCIvPgogIDxjaXJjbGUgY3g9Ijc4IiBjeT0iNTkiIHI9IjMiIGZpbGw9IiMwODJmNDkiLz4KICA8cGF0aCBkPSJNNjQgNjBRNjYgNTIgNzIgNTIiIHN0cm9rZT0iIzBjNGE2ZSIgc3Ryb2tlLXdpZHRoPSIyLjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMjIgNjBDMTMyIDYwIDEzMiA0NCAxNDQgNDRDMTU2IDQ0IDE1NiA3NiAxNDQgNzZDMTMyIDc2IDEzMiA2MCAxMjIgNjBaIiBmaWxsPSIjNGZjM2Y3Ii8+CiAgPHBhdGggZD0iTTE1MCA2MEMxNjQgNTggMTcwIDYwIDE3NiA2MUMxNzYgNTkgMTcwIDU2IDE1NiA1NloiIGZpbGw9IiM2N2U4ZjkiLz4KPC9zdmc+");
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        overflow-x: hidden;
+      }
+
+      html {
+        overflow-y: auto;
+        overscroll-behavior: auto;
+      }
+
+      body {
+        font-family: "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif;
+        color: #f2f8ff;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        overflow-y: auto;
+        background:
+          radial-gradient(circle at 20% 0, rgba(255, 255, 255, 0.18), transparent 35%),
+          radial-gradient(circle at 100% 24%, rgba(255, 255, 255, 0.12), transparent 34%),
+          linear-gradient(180deg, var(--water-light), #02688d 36%, var(--water-dark));
+        height: auto;
+      }
+
+      .wrap {
+        width: min(1220px, 98vw);
+        min-height: min-content;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-bottom: 12px;
+      }
+
+      .title {
+        text-align: center;
+        margin: 0;
+        font-size: clamp(30px, 6vw, 56px);
+        letter-spacing: 1.2px;
+        text-shadow: 0 4px 14px rgba(0, 0, 0, 0.36);
+      }
+
+      .hud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: stretch;
+      }
+
+      .panel {
+        flex: 1 1 150px;
+        min-width: 150px;
+        background: linear-gradient(180deg, rgba(8, 28, 44, 0.92), rgba(8, 23, 34, 0.92));
+        border: 2px solid #3bc9dd;
+        border-radius: 16px;
+        padding: 12px 14px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      }
+
+      .panel .label {
+        font-size: 14px;
+        color: #def1ff;
+        margin-bottom: 4px;
+      }
+
+      .panel .value {
+        color: var(--glow);
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 16px;
+        color: #07293b;
+        font-weight: 700;
+        background: linear-gradient(180deg, #3cd5ff, #2c9ed6);
+        font-family: inherit;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        filter: brightness(1.07);
+      }
+
+      .board-wrap {
+        position: relative;
+        overflow: auto;
+        border: 4px solid #f2d07a;
+        border-radius: 22px;
+        padding: 12px;
+        background: linear-gradient(180deg, rgba(7, 44, 70, 0.94), rgba(5, 24, 39, 0.94));
+        box-shadow:
+          inset 0 0 0 3px rgba(255, 255, 255, 0.08),
+          0 14px 32px rgba(0, 0, 0, 0.45);
+      }
+
+      .board {
+        display: grid;
+        margin: 0 auto;
+        gap: 0;
+        position: relative;
+      }
+
+      .tile {
+        width: var(--size);
+        height: var(--size);
+        position: relative;
+        border: 1px solid var(--tile-line);
+        overflow: hidden;
+      }
+
+      .tile.wall {
+        background: repeating-linear-gradient(50deg, var(--wall), var(--wall) 5px, var(--wall-2) 5px, var(--wall-2) 10px),
+          linear-gradient(180deg, #0b3048, #07334d);
+      }
+
+      .tile.path {
+        background:
+          radial-gradient(circle at 25% 16%, rgba(255, 255, 255, 0.08), transparent 35%),
+          linear-gradient(180deg, rgba(10, 114, 154, 0.95), rgba(8, 84, 121, 0.94) 50%, rgba(9, 68, 100, 0.9));
+        border-radius: 2px;
+      }
+
+      .tile.path.path-soft {
+        background:
+          radial-gradient(circle at 36% 24%, rgba(255, 255, 255, 0.16), transparent 34%),
+          linear-gradient(180deg, rgba(11, 124, 169, 0.95), rgba(9, 90, 128, 0.95) 50%, rgba(10, 72, 105, 0.92));
+      }
+
+      .tile.path.path-glow {
+        background:
+          radial-gradient(circle at 68% 18%, rgba(255, 240, 180, 0.2), transparent 34%),
+          linear-gradient(180deg, rgba(13, 118, 165, 0.95), rgba(9, 84, 123, 0.95) 50%, rgba(11, 74, 113, 0.92));
+      }
+
+      .tile.hidden {
+        background: linear-gradient(180deg, rgba(3, 24, 37, 0.95), rgba(2, 18, 29, 0.95));
+        box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95);
+      }
+
+      .entity {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transform-origin: center;
+        width: var(--shark-size);
+        height: var(--shark-size);
+        background-repeat: no-repeat;
+        background-size: 98%;
+        background-position: center;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+      }
+
+      .tile.you .entity {
+        width: var(--shark-size);
+        height: var(--shark-size);
+        background-image: var(--shark-art);
+        border: 0;
+        border-radius: 0;
+        clip-path: none;
+        animation: bob 1.1s ease-in-out infinite;
+      }
+
+      .tile.you-tiger .entity {
+        filter: saturate(1.12);
+      }
+
+      .tile.you-bull .entity {
+        filter: saturate(1.15);
+      }
+
+      .tile.you-greatWhite .entity {
+        filter: brightness(1.1);
+      }
+
+      .tile.you-hammerhead .entity {
+        filter: contrast(1.05);
+      }
+
+      .tile.you-lemon .entity {
+        filter: brightness(1.12) saturate(1.2);
+      }
+
+      .tile.you .entity::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        transform: scale(0);
+      }
+
+      .tile.you .entity::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        transform: scale(0);
+      }
+
+      .tile.fish .entity {
+        width: var(--fish-size);
+        height: var(--fish-size);
+        background-image: var(--fish-art);
+        border: 0;
+        border-radius: 0;
+        clip-path: none;
+        animation: pulse 0.8s ease-in-out infinite;
+      }
+
+      .tile.fish .entity::before {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        left: 0;
+        top: 0;
+        transform: scale(0);
+      }
+
+      .tile.fish .entity::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        left: 0;
+        top: 0;
+        transform: scale(0);
+      }
+
+      .tile.you .shield {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #80ffbf;
+        box-shadow: 0 0 10px rgba(122, 255, 206, 0.8);
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        display: none;
+        place-items: center;
+        background: rgba(3, 17, 31, 0.75);
+        border-radius: 12px;
+        animation: fadeIn 0.2s ease-out;
+        text-align: center;
+      }
+
+      .screen.show {
+        display: grid;
+      }
+
+      .panel-card {
+        background: linear-gradient(180deg, rgba(12, 30, 47, 0.95), rgba(11, 19, 30, 0.95));
+        border: 2px solid #4ce0ff;
+        border-radius: 14px;
+        max-width: min(680px, 92vw);
+        width: 100%;
+        padding: 18px;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .panel-card h2,
+      .panel-card p {
+        margin: 0 0 10px;
+      }
+
+      .shark-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0 14px;
+      }
+
+      .shark-btn {
+        border: 2px solid transparent;
+        border-radius: 12px;
+        color: #f1f7ff;
+        background: linear-gradient(180deg, rgba(13, 44, 70, 0.95), rgba(7, 22, 34, 0.95));
+        padding: 12px 10px;
+        font-family: inherit;
+        cursor: pointer;
+        font-size: 14px;
+        text-align: left;
+      }
+
+      .shark-btn.selected {
+        border-color: #9de2ff;
+        box-shadow: 0 0 0 2px rgba(79, 205, 242, 0.4);
+      }
+
+      .shark-title {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+
+      .shark-desc {
+        font-size: 12px;
+        color: #b9d4e8;
+        margin: 0;
+      }
+
+      .menu-note {
+        margin: 8px 0 12px;
+        color: #d7e8f4;
+        font-size: 14px;
+      }
+
+      .result {
+        margin-top: 8px;
+        color: #f3f8ff;
+      }
+
+      .pad {
+        display: none;
+        margin-top: 12px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        width: min(280px, 86vw);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .pad button {
+        border: 0;
+        border-radius: 14px;
+        padding: 16px 0;
+        background: linear-gradient(180deg, #f2da84, #e9a14f);
+        font-family: inherit;
+        font-size: 22px;
+        font-weight: 700;
+        color: #122f45;
+      }
+
+      .pad button:nth-child(2) {
+        grid-column: 2;
+      }
+
+      .pad button:nth-child(3) {
+        grid-column: 3;
+      }
+
+      .pad button:active {
+        transform: translateY(1px);
+      }
+
+      .result-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .small {
+        font-size: 14px;
+        color: #bcd3e8;
+      }
+
+      @media (max-width: 760px) {
+        .pad {
+          display: grid;
+        }
+
+        .shark-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .tile.you .entity,
+        .tile.fish .entity {
+          animation: none;
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(0.92);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.12);
+        }
+      }
+
+      @keyframes bob {
+        0%,
+        100% {
+          transform: translate(-50%, -50%);
+        }
+        50% {
+          transform: translate(-50%, -50%) translateY(-3px);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 class="title">Shark Attack</h1>
+      <div class="hud">
+        <div class="panel">
+          <div class="label">Score</div>
+          <div class="value" id="score">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Level</div>
+          <div class="value" id="level">1</div>
+        </div>
+        <div class="panel">
+          <div class="label">Fish</div>
+          <div class="value" id="fish-progress">0 / 3</div>
+        </div>
+        <div class="panel">
+          <div class="label">Best</div>
+          <div class="value" id="best-score">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Time</div>
+          <div class="value" id="run-time">0</div>
+        </div>
+        <div class="panel">
+          <div class="label">Difficulty</div>
+          <div class="value" id="difficulty">Easy</div>
+        </div>
+        <div class="panel">
+          <div class="label">Shark</div>
+          <div class="value" id="shark-name">Tiger</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="pause" class="btn" type="button">Pause</button>
+        <button id="restart" class="btn" type="button">Restart run</button>
+        <button id="change-shark" class="btn" type="button">Change shark</button>
+      </div>
+      <div class="board-wrap" id="boardWrap">
+        <div id="board" class="board" aria-label="Shark Attack maze"></div>
+        <div id="warning" class="small" style="position: absolute; left: 12px; top: 12px; color: #ffe8a7; text-shadow: 0 0 10px rgba(255, 216, 110, 0.35); z-index: 3"></div>
+        <div id="menu" class="screen show">
+          <div class="panel-card">
+            <h2>Choose your shark and start</h2>
+            <div class="shark-grid" id="shark-grid"></div>
+            <p class="menu-note" id="shark-note">Pick a shark then press start. Use arrows or WASD, with touch arrows on phone.</p>
+            <div class="result-actions">
+              <button id="start-run" class="btn" type="button">Start run</button>
+              <button id="start-easy" class="btn" type="button">Auto start</button>
+            </div>
+            <p class="small">Best score is session only and will reset when you reload.</p>
+          </div>
+        </div>
+        <div id="overlay" class="screen">
+          <div class="panel-card">
+            <h2 id="result-title"></h2>
+            <p class="result" id="result-text"></p>
+            <p class="small" id="result-sub"></p>
+            <div class="result-actions">
+              <button id="continue" class="btn" type="button">Play again</button>
+              <button id="back-to-menu" class="btn" type="button">Change shark</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pad">
+        <button id="up" type="button">Up</button>
+        <button id="left" type="button">Left</button>
+        <button id="down" type="button">Down</button>
+        <button id="right" type="button">Right</button>
+      </div>
+    </div>
+
+        <script>
+      const board = document.getElementById('board')
+      const boardWrap = document.getElementById('boardWrap')
+      const scoreEl = document.getElementById('score')
+      const levelEl = document.getElementById('level')
+      const fishProgressEl = document.getElementById('fish-progress')
+      const bestScoreEl = document.getElementById('best-score')
+      const runTimeEl = document.getElementById('run-time')
+      const difficultyEl = document.getElementById('difficulty')
+      const sharkNameEl = document.getElementById('shark-name')
+      const warningEl = document.getElementById('warning')
+      const menu = document.getElementById('menu')
+      const overlay = document.getElementById('overlay')
+      const sharkGrid = document.getElementById('shark-grid')
+      const resultTitle = document.getElementById('result-title')
+      const resultText = document.getElementById('result-text')
+      const resultSub = document.getElementById('result-sub')
+      const sharkNote = document.getElementById('shark-note')
+      const startButton = document.getElementById('start-run')
+      const startEasyButton = document.getElementById('start-easy')
+      const restartButton = document.getElementById('restart')
+      const pauseButton = document.getElementById('pause')
+      const changeSharkButton = document.getElementById('change-shark')
+      const continueButton = document.getElementById('continue')
+      const backToMenuButton = document.getElementById('back-to-menu')
+      const upBtn = document.getElementById('up')
+      const downBtn = document.getElementById('down')
+      const leftBtn = document.getElementById('left')
+      const rightBtn = document.getElementById('right')
+
+      const baseLoopMs = 120
+      const directions = {
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 },
+      }
+
+      const sharkCatalog = {
+        tiger: {
+          id: 'tiger',
+          name: 'Tiger',
+          speed: 4,
+          turnDelay: 2,
+          fishBonus: 4,
+          blurb: 'Fast and smooth turns for active chases.',
+          longName: 'Tiger Shark',
+        },
+        bull: {
+          id: 'bull',
+          name: 'Bull',
+          speed: 3,
+          turnDelay: 3,
+          fishBonus: 2,
+          blurb: 'Strong swimmer that pushes through larger openings.',
+          longName: 'Bull Shark',
+        },
+        greatWhite: {
+          id: 'greatWhite',
+          name: 'Great White',
+          speed: 2,
+          turnDelay: 3,
+          fishBonus: 5,
+          blurb: 'Best score pacing with reliable movement.',
+          longName: 'Great White',
+        },
+        hammerhead: {
+          id: 'hammerhead',
+          name: 'Hammerhead',
+          speed: 4,
+          turnDelay: 2,
+          fishBonus: 3,
+          blurb: 'Tight corridor control with very precise turns.',
+          longName: 'Hammerhead',
+        },
+        lemon: {
+          id: 'lemon',
+          name: 'Lemon',
+          speed: 5,
+          turnDelay: 1,
+          fishBonus: 3,
+          blurb: 'Quick pivots and sharp acceleration in crowded water.',
+          longName: 'Lemon Shark',
+        },
+      }
+
+      const state = {
+        selectedShark: 'tiger',
+        bestScore: 0,
+        score: 0,
+        level: 1,
+        fishGoal: 3,
+        fishCaught: 0,
+        fishTotal: 0,
+        fishScore: 0,
+        levelScore: 0,
+        chain: 0,
+        running: false,
+        paused: false,
+        awaitingNext: false,
+        runStart: 0,
+        tick: 0,
+        rows: 0,
+        cols: 0,
+        maze: [],
+        tileEls: [],
+        player: { x: 1, y: 1 },
+        fish: [],
+        fishMoveCounter: 0,
+        fishMoveEvery: 7,
+        playerMoveEvery: 2,
+        currentDir: { x: 0, y: 0 },
+        nextDir: { x: 0, y: 0 },
+        turnCooldown: 0,
+      }
+
+      function idx(x, y) {
+        return `${x},${y}`
+      }
+
+      function tileIndex(x, y) {
+        return y * state.cols + x
+      }
+
+      function inBounds(x, y) {
+        return x >= 0 && y >= 0 && x < state.cols && y < state.rows
+      }
+
+      function manhattan(a, b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+      }
+
+      function randomInt(max) {
+        return Math.floor(Math.random() * max)
+      }
+
+      function shuffle(items) {
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[items[i], items[j]] = [items[j], items[i]]
+        }
+        return items
+      }
+
+      function buildSharkMenu() {
+        const order = ['tiger', 'bull', 'greatWhite', 'hammerhead', 'lemon']
+        sharkGrid.innerHTML = ''
+        order.forEach((id) => {
+          const shark = sharkCatalog[id]
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = 'shark-btn'
+          button.innerHTML = `<div class="shark-title">${shark.longName}</div><p class="shark-desc">${shark.blurb}</p>`
+          button.addEventListener('click', () => selectShark(id))
+          sharkGrid.appendChild(button)
+        })
+        selectShark(state.selectedShark)
+      }
+
+      function selectShark(id) {
+        const order = ['tiger', 'bull', 'greatWhite', 'hammerhead', 'lemon']
+        state.selectedShark = id
+        Array.from(sharkGrid.children).forEach((button, index) => {
+          button.classList.toggle('selected', index === order.indexOf(id))
+        })
+      }
+
+      function dimensionsForLevel(level) {
+        const growth = Math.floor((level - 1) / 2)
+        const compact = window.innerWidth < 860
+        let rows = (compact ? 21 : 29) + growth * 2
+        let cols = (compact ? 32 : 50) + growth * 2
+        if (rows % 2 === 0) rows += 1
+        if (cols % 2 === 0) cols += 1
+        return { rows, cols }
+      }
+
+      function fishGoal(level) {
+        return 2 + Math.min(4, Math.floor(level / 2))
+      }
+
+      function initBoardGrid() {
+        const { rows, cols } = dimensionsForLevel(state.level)
+        state.rows = rows
+        state.cols = cols
+        state.maze = []
+        state.tileEls = []
+        board.innerHTML = ''
+
+                const cellByWidth = (window.innerWidth - 110) / cols
+        const cellByHeight = (window.innerHeight - 330) / rows
+        const compact = window.innerWidth < 860
+        const minCell = compact ? 12 : 16
+        const maxCell = compact ? 34 : 48
+        const cellX = Math.floor(Math.max(minCell, Math.min(maxCell, Math.min(cellByWidth, cellByHeight))))
+
+        board.style.gridTemplateColumns = `repeat(${cols}, var(--size))`
+        board.style.setProperty('--size', `${cellX}px`)
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const tile = document.createElement('div')
+            tile.className = 'tile'
+            state.tileEls.push(tile)
+            board.appendChild(tile)
+          }
+        }
+      }
+
+      function clearToWalls() {
+        state.maze = Array.from({ length: state.rows }, (_, y) =>
+          Array.from({ length: state.cols }, (_, x) => (x === 0 || y === 0 || x === state.cols - 1 || y === state.rows - 1 ? 1 : 0)),
+        )
+      }
+
+      function collectReachable(start) {
+        const queue = [start]
+        const seen = new Set([idx(start.x, start.y)])
+        let head = 0
+        while (head < queue.length) {
+          const cur = queue[head++]
+          for (const dir of Object.values(directions)) {
+            const nx = cur.x + dir.x
+            const ny = cur.y + dir.y
+            if (!inBounds(nx, ny)) continue
+            if (state.maze[ny][nx] === 1) continue
+            const k = idx(nx, ny)
+            if (seen.has(k)) continue
+            seen.add(k)
+            queue.push({ x: nx, y: ny })
+          }
+        }
+        return seen
+      }
+
+      function collectOpenFromSet(openSet, exclude = new Set()) {
+        const open = []
+        for (const key of openSet) {
+          if (!exclude.has(key)) {
+            const [x, y] = key.split(',').map(Number)
+            open.push({ x, y })
+          }
+        }
+        return open
+      }
+
+      function randomOpenFromSet(openSet, exclude = new Set()) {
+        const open = collectOpenFromSet(openSet, exclude)
+        if (!open.length) return null
+        return open[randomInt(open.length)]
+      }
+
+      function randomOpen() {
+        const openSet = new Set()
+        for (let y = 1; y < state.rows - 1; y++) {
+          for (let x = 1; x < state.cols - 1; x++) {
+            if (state.maze[y][x] === 0) openSet.add(idx(x, y))
+          }
+        }
+        return randomOpenFromSet(openSet)
+      }
+
+      function addReefClusters() {
+        const target = Math.floor((state.rows * state.cols) * (0.11 + Math.min(0.14, state.level * 0.01)))
+        for (let i = 0; i < target; i++) {
+          let cx = 2 + randomInt(state.cols - 4)
+          let cy = 2 + randomInt(state.rows - 4)
+          const path = 2 + randomInt(8)
+          for (let s = 0; s < path; s++) {
+            state.maze[cy][cx] = 1
+            const dir = randomInt(4)
+            if (dir === 0 && cx < state.cols - 2) cx += 1
+            if (dir === 1 && cx > 1) cx -= 1
+            if (dir === 2 && cy < state.rows - 2) cy += 1
+            if (dir === 3 && cy > 1) cy -= 1
+          }
+        }
+      }
+
+      function addCorridorPaths() {
+        const lanes = 4 + Math.floor(state.level / 2)
+        for (let i = 0; i < lanes; i++) {
+          let cx = 1 + randomInt(state.cols - 2)
+          let cy = 1 + randomInt(state.rows - 2)
+          const steps = Math.max(state.rows, state.cols)
+          for (let s = 0; s < steps; s++) {
+            state.maze[cy][cx] = 0
+            const dir = randomInt(4)
+            if (dir === 0 && cx < state.cols - 2) cx += 1
+            if (dir === 1 && cx > 1) cx -= 1
+            if (dir === 2 && cy < state.rows - 2) cy += 1
+            if (dir === 3 && cy > 1) cy -= 1
+          }
+        }
+      }
+
+      function ensureOpen() {
+        for (let x = 0; x < state.cols; x++) {
+          state.maze[1][x] = 0
+          state.maze[state.rows - 2][x] = 0
+        }
+        for (let y = 0; y < state.rows; y++) {
+          state.maze[y][1] = 0
+          state.maze[y][state.cols - 2] = 0
+        }
+      }
+
+      function chooseZones(cellSet, count) {
+        const list = [...cellSet]
+        const zones = []
+        while (zones.length < count && list.length) {
+          zones.push(list[randomInt(list.length)])
+          list.splice(randomInt(list.length), 1)
+        }
+        return zones.map((key) => {
+          const [x, y] = key.split(',').map(Number)
+          return { x, y }
+        })
+      }
+
+      function placeEntities() {
+        const openSet = new Set()
+        for (let y = 1; y < state.rows - 1; y++) {
+          for (let x = 1; x < state.cols - 1; x++) {
+            if (state.maze[y][x] === 0) openSet.add(idx(x, y))
+          }
+        }
+
+        const candidateStart = randomOpenFromSet(openSet)
+        if (!candidateStart) return false
+        state.player = candidateStart
+
+        const reachable = collectReachable(state.player)
+        const need = fishGoal(state.level)
+        if (reachable.size < need + 6) return false
+
+        const exclude = new Set([idx(state.player.x, state.player.y)])
+        const fishZones = chooseZones(reachable, Math.min(3, need))
+        state.fish = []
+
+        let guard = 0
+        for (let i = 0; i < need; i++) {
+          const zone = fishZones[i % fishZones.length]
+          let candidate = randomOpenFromSet(reachable, exclude)
+          if (!candidate) return false
+          let retries = 0
+          while (retries < 22 && (manhattan(candidate, state.player) < 2 || manhattan(candidate, zone) > 4 && manhattan(candidate, zone) < 12)) {
+            candidate = randomOpenFromSet(reachable, exclude)
+            retries++
+            if (!candidate) break
+          }
+          if (!candidate) return false
+          state.fish.push({ x: candidate.x, y: candidate.y })
+          exclude.add(idx(candidate.x, candidate.y))
+          guard++
+          if (guard > 500) return false
+        }
+
+        return true
+      }
+
+      function startLevel() {
+        initBoardGrid()
+        let attempts = 0
+        let ok = false
+        while (!ok && attempts < 15) {
+          clearToWalls()
+          addReefClusters()
+          addCorridorPaths()
+          ensureOpen()
+          ok = placeEntities()
+          attempts += 1
+        }
+        if (!ok) {
+          clearToWalls()
+          addCorridorPaths()
+          ensureOpen()
+          placeEntities()
+        }
+
+        state.fishGoal = fishGoal(state.level)
+        state.fishCaught = 0
+        state.fishMoveCounter = 0
+        state.currentDir = { x: 0, y: 0 }
+        state.nextDir = { x: 0, y: 0 }
+        state.turnCooldown = 0
+        setupDifficulty()
+      }
+
+      function setupDifficulty() {
+        const shark = sharkCatalog[state.selectedShark]
+        const basePlayer = 6 - shark.speed
+        state.playerMoveEvery = Math.max(1, basePlayer)
+        const baseFish = 9 - Math.floor(shark.speed / 2)
+        state.fishMoveEvery = Math.max(3, baseFish + Math.floor(state.level / 2))
+      }
+
+      function render() {
+        warningEl.textContent = 'Drive your shark to every fish. Fish move slowly, so stay sharp.'
+
+        for (let y = 0; y < state.rows; y++) {
+          for (let x = 0; x < state.cols; x++) {
+            const tile = state.tileEls[tileIndex(x, y)]
+            const isWall = state.maze[y][x] === 1
+            tile.className = 'tile'
+            tile.classList.add(isWall ? 'wall' : 'path')
+            if (!isWall) {
+              const pattern = (x * 17 + y * 31) % 3
+              if (pattern === 1) tile.classList.add('path-soft')
+              if (pattern === 2) tile.classList.add('path-glow')
+            }
+            tile.innerHTML = ''
+          }
+        }
+
+        for (const fish of state.fish) {
+          const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
+          fishTile.classList.add('fish')
+          fishTile.innerHTML = '<span class="entity"></span>'
+        }
+
+        if (state.player) {
+          const playerTile = state.tileEls[tileIndex(state.player.x, state.player.y)]
+          playerTile.classList.add('you', `you-${state.selectedShark}`)
+          playerTile.innerHTML = '<span class="entity"></span>'
+        }
+      }
+
+      function updateHUD() {
+        const elapsed = state.runStart ? Math.floor((performance.now() - state.runStart) / 1000) : 0
+        state.score = state.fishScore + state.levelScore + Math.floor(elapsed / 2)
+        scoreEl.textContent = String(state.score)
+        bestScoreEl.textContent = String(state.bestScore)
+        levelEl.textContent = String(state.level)
+        fishProgressEl.textContent = `${state.fishCaught} / ${state.fishGoal}`
+        runTimeEl.textContent = `${elapsed}s`
+        difficultyEl.textContent = state.level <= 2 ? 'Easy' : state.level <= 5 ? 'Medium' : state.level <= 8 ? 'Hard' : 'Extreme'
+        sharkNameEl.textContent = sharkCatalog[state.selectedShark].name
+      }
+
+      function moveFish() {
+        const pending = new Set()
+        const nextFish = []
+
+        for (const fish of state.fish) {
+          const occupied = new Set(state.fish.map((f) => idx(f.x, f.y)).filter((k) => !pending.has(k)))
+          const options = []
+          for (const dir of Object.values(directions)) {
+            const nx = fish.x + dir.x
+            const ny = fish.y + dir.y
+            if (!inBounds(nx, ny)) continue
+            if (state.maze[ny][nx] === 1) continue
+            const key = idx(nx, ny)
+            if (occupied.has(key) || pending.has(key)) continue
+            let openAround = 0
+            for (const escape of Object.values(directions)) {
+              const ex = nx + escape.x
+              const ey = ny + escape.y
+              if (!inBounds(ex, ey)) continue
+              if (state.maze[ey][ex] === 0) openAround += 1
+            }
+            options.push({ x: nx, y: ny, distance: manhattan({ x: nx, y: ny }, state.player), escape: openAround })
+          }
+          if (!options.length) {
+            nextFish.push({ ...fish })
+            continue
+          }
+          options.sort((a, b) => {
+            if (a.distance !== b.distance) return b.distance - a.distance
+            if (a.escape !== b.escape) return b.escape - a.escape
+            return 0
+          })
+          const top = options[0]
+          const tied = options.filter((p) => p.distance === top.distance && p.escape === top.escape)
+          const selected = tied[randomInt(tied.length)]
+          const key = idx(selected.x, selected.y)
+          nextFish.push({ x: selected.x, y: selected.y })
+          pending.add(key)
+        }
+
+        state.fish = nextFish
+      }
+
+      function collectIfOnFish() {
+        const index = state.fish.findIndex((fish) => fish.x === state.player.x && fish.y === state.player.y)
+        if (index === -1) return false
+
+        const shark = sharkCatalog[state.selectedShark]
+        state.fish.splice(index, 1)
+        state.fishCaught += 1
+        state.fishTotal += 1
+        state.chain += 1
+        state.fishScore += 24 + state.level * 4 + shark.fishBonus + state.chain
+
+        if (state.fish.length === 0) {
+          state.running = false
+          state.awaitingNext = true
+          state.levelScore += 35 + state.level * 20
+          const levelText = `You caught ${state.fishCaught} fish on level ${state.level}`
+          const title = 'Area clear'
+          resultTitle.textContent = title
+          resultText.textContent = `${levelText}. Nice chase.`
+          resultSub.textContent = `Next up: level ${state.level + 1}. Your score is now ${state.fishScore + state.levelScore}.`
+          if (state.score > state.bestScore) state.bestScore = state.score
+          bestScoreEl.textContent = String(state.bestScore)
+          overlay.classList.add('show')
+        }
+        return true
+      }
+
+      function startRun() {
+        state.level = 1
+        state.fishGoal = fishGoal(state.level)
+        state.fishTotal = 0
+        state.fishScore = 0
+        state.levelScore = 0
+        state.score = 0
+        state.fishCaught = 0
+        state.chain = 0
+        state.runStart = performance.now()
+        state.running = true
+        state.paused = false
+        state.awaitingNext = false
+        state.tick = 0
+        pauseButton.textContent = 'Pause'
+        menu.classList.remove('show')
+        overlay.classList.remove('show')
+
+        startLevel()
+        render()
+        updateHUD()
+      }
+
+      function continueRun() {
+        if (!state.awaitingNext) return
+        state.awaitingNext = false
+        state.level += 1
+        state.fishCaught = 0
+        startLevel()
+        overlay.classList.remove('show')
+        render()
+        updateHUD()
+        state.running = true
+      }
+
+      function setDir(name) {
+        const dir = directions[name]
+        if (!dir) return
+        state.nextDir = { ...dir }
+      }
+
+      function attemptPlayerMove() {
+        const next = state.nextDir
+        if ((next.x === 0 && next.y === 0) || state.turnCooldown > 0) return
+
+        const targetX = state.player.x + next.x
+        const targetY = state.player.y + next.y
+        if (inBounds(targetX, targetY) && state.maze[targetY][targetX] === 0) {
+          state.player.x = targetX
+          state.player.y = targetY
+          collectIfOnFish()
+        }
+
+        state.turnCooldown = state.playerMoveEvery
+        state.nextDir = { x: 0, y: 0 }
+      }
+
+      function tick() {
+        if (!state.running || state.paused) return
+        state.tick += 1
+
+        if (state.turnCooldown > 0) state.turnCooldown -= 1
+
+        attemptPlayerMove()
+
+        state.fishMoveCounter += 1
+        if (state.fishMoveCounter >= state.fishMoveEvery) {
+          state.fishMoveCounter = 0
+          moveFish()
+          if (collectIfOnFish()) {
+            // caught a fish after fish repositioning
+          }
+        }
+
+        render()
+        updateHUD()
+      }
+
+      window.addEventListener('keydown', (event) => {
+        const keyMap = {
+          ArrowUp: 'up',
+          ArrowDown: 'down',
+          ArrowLeft: 'left',
+          ArrowRight: 'right',
+          w: 'up',
+          s: 'down',
+          a: 'left',
+          d: 'right',
+        }
+        const target = keyMap[event.key]
+        if (!target) return
+        event.preventDefault()
+        setDir(target)
+      })
+
+      upBtn.addEventListener('click', () => setDir('up'))
+      downBtn.addEventListener('click', () => setDir('down'))
+      leftBtn.addEventListener('click', () => setDir('left'))
+      rightBtn.addEventListener('click', () => setDir('right'))
+
+      ;[{ el: upBtn, dir: 'up' }, { el: downBtn, dir: 'down' }, { el: leftBtn, dir: 'left' }, { el: rightBtn, dir: 'right' }].forEach((entry) => {
+        entry.el.addEventListener('touchstart', () => setDir(entry.dir), { passive: true })
+      })
+
+      startButton.addEventListener('click', startRun)
+      startEasyButton.addEventListener('click', startRun)
+      continueButton.addEventListener('click', () => {
+        if (state.awaitingNext) {
+          continueRun()
+        } else {
+          startRun()
+        }
+      })
+
+      changeSharkButton.addEventListener('click', () => {
+        state.running = false
+        state.paused = false
+        state.awaitingNext = false
+        overlay.classList.remove('show')
+        menu.classList.add('show')
+      })
+
+      backToMenuButton.addEventListener('click', () => {
+        state.running = false
+        state.paused = false
+        state.awaitingNext = false
+        overlay.classList.remove('show')
+        menu.classList.add('show')
+      })
+
+      restartButton.addEventListener('click', startRun)
+      pauseButton.addEventListener('click', () => {
+        if (!state.running) return
+        state.paused = !state.paused
+        pauseButton.textContent = state.paused ? 'Resume' : 'Pause'
+      })
+
+      window.addEventListener('resize', () => {
+        if (state.running) {
+          initBoardGrid()
+          startLevel()
+          render()
+          updateHUD()
+        } else {
+          initBoardGrid()
+          clearToWalls()
+          render()
+        }
+      })
+
+      function init() {
+        buildSharkMenu()
+        menu.classList.add('show')
+        overlay.classList.remove('show')
+        initBoardGrid()
+        clearToWalls()
+        render()
+        updateHUD()
+        state.timer = setInterval(tick, baseLoopMs)
+      }
+
+      init()
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
