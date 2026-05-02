@@ -1201,7 +1201,13 @@
         const baseFish = 9 - Math.floor(shark.speed / 2)
         const levelBoost = Math.floor(state.level / 2)
         state.fishMoveEvery = Math.max(2, Math.round((baseFish + levelBoost) * tier.fishDelay * state.fishSpeedMultiplier))
-        state.orcaMoveEvery = Math.max(2, Math.ceil(state.playerMoveEvery / 0.9))
+        const orcaMoveDelay = {
+          easy: 2.7,
+          medium: 2.2,
+          hard: 1.8,
+          extreme: 1.5,
+        }
+        state.orcaMoveEvery = Math.max(3, Math.ceil(state.playerMoveEvery * (orcaMoveDelay[state.difficulty] || 2.2)))
       }
 
       function spawnOrca() {
@@ -1255,6 +1261,13 @@
 
         if (!candidates.length) return
 
+        const smartChance = {
+          easy: 0.45,
+          medium: 0.65,
+          hard: 0.78,
+          extreme: 0.9,
+        }
+        const isSmart = Math.random() < (smartChance[state.difficulty] || 0.65)
         let bestDistance = candidates[0].distance
         for (const candidate of candidates) {
           if (candidate.distance < bestDistance) {
@@ -1263,7 +1276,7 @@
         }
 
         const bestOptions = candidates.filter((candidate) => candidate.distance === bestDistance)
-        const chosen = bestOptions[randomInt(bestOptions.length)]
+        const chosen = isSmart || bestOptions.length === 1 ? bestOptions[randomInt(bestOptions.length)] : candidates[randomInt(candidates.length)]
         state.orca.x = chosen.x
         state.orca.y = chosen.y
       }
