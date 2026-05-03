@@ -285,7 +285,7 @@
       }
 
       .tile.fish.red .entity {
-        filter: hue-rotate(325deg) saturate(1.8) brightness(1.12) drop-shadow(0 4px 6px rgba(160, 0, 0, 0.35));
+        filter: drop-shadow(0 4px 6px rgba(200, 0, 0, 0.35));
       }
 
       .tile.orca .entity {
@@ -839,6 +839,11 @@
         return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
       }
 
+      function makeFishArt(colors) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120" fill="none"><ellipse cx="86" cy="60" rx="52" ry="26" fill="${colors.body}"/><path d="M36 60C36 42 52 32 76 40L76 80C52 88 36 78 36 60Z" fill="${colors.accent}"/><path d="M86 60C90 44 120 46 146 55L130 74C112 66 98 64 86 60Z" fill="${colors.fin}"/><path d="M152 56L182 56L178 60L182 64L152 64Z" fill="${colors.tail}"/><circle cx="100" cy="56" r="3" fill="${colors.eye}"/><circle cx="103" cy="57" r="2" fill="#f8fafc"/><path d="M78 76L58 92L66 92L84 80Z" fill="${colors.accent}"/></svg>`
+        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
+      }
+
       const sharkArtByType = {
         tiger: makeSharkArt({
           body: '#f46a50',
@@ -933,6 +938,23 @@
           art: sharkArtByType.lemon,
           longName: 'Lemon Shark',
         },
+      }
+
+      const fishArtByType = {
+        normal: makeFishArt({
+          body: '#22d3ee',
+          accent: '#0ea5e9',
+          fin: '#082f49',
+          tail: '#0f766e',
+          eye: '#0b1220',
+        }),
+        red: makeFishArt({
+          body: '#ef4444',
+          accent: '#fb7185',
+          fin: '#7f1d1d',
+          tail: '#dc2626',
+          eye: '#1f2937',
+        }),
       }
 
       const sharkPowerMap = {
@@ -1741,8 +1763,12 @@
           const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
           fishTile.classList.add('fish')
           fishTile.classList.toggle('fish-coming', state.fishSpawnPending)
-          fishTile.classList.toggle('red', fish.kind === 'red' && isRedPoisonWindow())
+          fishTile.classList.toggle('red', fish.kind === 'red')
           fishTile.innerHTML = '<span class="entity"></span>'
+          const entity = fishTile.querySelector('.entity')
+          if (entity) {
+            entity.style.backgroundImage = fish.kind === 'red' ? fishArtByType.red : fishArtByType.normal
+          }
         }
 
         if (state.player) {
@@ -1761,6 +1787,34 @@
           orcaTile.classList.add('orca')
           orcaTile.innerHTML = '<span class="entity"></span>'
         }
+      }
+
+      function handleOrcaFishCollision() {
+        if (!state.orca || !state.fish.length) return false
+
+        const hitIndex = state.fish.findIndex((fish) => fish.x === state.orca.x && fish.y === state.orca.y)
+        if (hitIndex < 0) return false
+
+        const consumed = state.fish[hitIndex]
+        const isPoison = consumed.kind === 'red' && isRedPoisonWindow()
+        state.fish.splice(hitIndex, 1)
+
+        if (isPoison) {
+          warningEl.textContent = 'Orca ate a poison fish and died'
+          setFeedback('Poison fish eliminated the orca', 1400)
+          state.orcaSpawned = false
+          state.orca = null
+          state.orcaWarned = false
+          state.orcaMoveCounter = 0
+          state.orcaMoveEvery = 0
+          state.orcaSpawnTime = 0
+          state.orcaDir = { x: 0, y: 0 }
+          state.levelStart = performance.now()
+          return true
+        }
+
+        setFeedback(consumed.kind === 'red' ? 'Orca ate a red fish' : 'Orca ate a fish')
+        return false
       }
 
       function updateHUD() {
@@ -2023,6 +2077,12 @@
           if (state.orcaMoveCounter >= state.orcaMoveEvery) {
             state.orcaMoveCounter = 0
             moveOrca()
+            if (handleOrcaFishCollision()) {
+              render()
+              updateHUD()
+              updateFishSpawnHint()
+              return
+            }
             if (checkOrcaCatch()) {
               return
             }
