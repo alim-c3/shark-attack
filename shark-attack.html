@@ -826,7 +826,7 @@
       const FISH_SPAWN_DELAY_MS = 2200
       const FISH_SPAWN_DELAY_EASY_MS = 2800
       const RED_POISON_WINDOW_MS = 5000
-      const RED_POISON_CYCLE_MS = 30000
+      const POISON_INTERVAL_MS = 15000
       const directions = {
         up: { x: 0, y: -1 },
         down: { x: 0, y: 1 },
@@ -1063,6 +1063,8 @@
         fishSpawnPending: false,
         fishSpawnDelayMs: FISH_SPAWN_DELAY_MS,
         redFishCaught: 0,
+        fishIdCounter: 1,
+        nextPoisonAt: 0,
         runHighestLevel: 1,
         playerMoveEvery: 2,
         currentDir: { x: 0, y: 0 },
@@ -1122,11 +1124,32 @@
         return Infinity
       }
 
-      function isRedPoisonWindow(now = performance.now()) {
-        if (!state.runStart) return false
-        const elapsed = now - state.runStart
-        const phase = Math.floor((elapsed % RED_POISON_CYCLE_MS) / RED_POISON_WINDOW_MS)
-        return phase === 0
+      function isPoisonedFish(fish, now = performance.now()) {
+        return fish && fish.poisonUntil != null && now < fish.poisonUntil
+      }
+
+      function clearExpiredPoison(now = performance.now()) {
+        if (!state.fish.length) return
+        for (const fish of state.fish) {
+          if (fish.poisonUntil && now >= fish.poisonUntil) {
+            delete fish.poisonUntil
+          }
+        }
+      }
+
+      function updatePoisonFish(now = performance.now()) {
+        clearExpiredPoison(now)
+        if (now < state.nextPoisonAt) return
+
+        const candidates = state.fish.filter((fish) => !isPoisonedFish(fish, now))
+        if (!candidates.length) {
+          state.nextPoisonAt = now + POISON_INTERVAL_MS
+          return
+        }
+
+        const target = candidates[randomInt(candidates.length)]
+        target.poisonUntil = now + RED_POISON_WINDOW_MS
+        state.nextPoisonAt = now + POISON_INTERVAL_MS
       }
 
       function shuffle(items) {
@@ -1417,13 +1440,15 @@
             if (!candidate) break
           }
           if (!candidate) return false
-        const isRed = i === 0
+          const id = state.fishIdCounter
           state.fish.push({
             x: candidate.x,
             y: candidate.y,
-            kind: isRed ? 'red' : 'normal',
+            kind: 'normal',
+            id,
             dir: { x: 0, y: 0 },
           })
+          state.fishIdCounter += 1
           exclude.add(idx(candidate.x, candidate.y))
           guard++
           if (guard > 500) return false
@@ -1463,6 +1488,10 @@
         state.nextDir = { x: 0, y: 0 }
         state.turnCooldown = 0
         state.orcaDir = { x: 0, y: 0 }
+        state.nextPoisonAt = performance.now() + POISON_INTERVAL_MS
+        state.fish.forEach((fish) => {
+          if (fish.poisonUntil) delete fish.poisonUntil
+        })
         setupDifficulty()
       }
 
@@ -1745,6 +1774,7 @@
 
       function render() {
         warningEl.textContent = ''
+        const now = performance.now()
 
         for (let y = 0; y < state.rows; y++) {
           for (let x = 0; x < state.cols; x++) {
@@ -1763,13 +1793,14 @@
 
         for (const fish of state.fish) {
           const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
+          const poisoned = isPoisonedFish(fish, now)
           fishTile.classList.add('fish')
           fishTile.classList.toggle('fish-coming', state.fishSpawnPending)
-          fishTile.classList.toggle('red', fish.kind === 'red')
+          fishTile.classList.toggle('red', poisoned)
           fishTile.innerHTML = '<span class="entity"></span>'
           const entity = fishTile.querySelector('.entity')
           if (entity) {
-            entity.style.backgroundImage = fish.kind === 'red' ? fishArtByType.red : fishArtByType.normal
+            entity.style.backgroundImage = poisoned ? fishArtByType.red : fishArtByType.normal
           }
         }
 
@@ -1798,7 +1829,7 @@
         if (hitIndex < 0) return false
 
         const consumed = state.fish[hitIndex]
-        const isPoison = consumed.kind === 'red' && isRedPoisonWindow()
+        const isPoison = isPoisonedFish(consumed)
         state.fish.splice(hitIndex, 1)
 
         if (isPoison) {
@@ -1815,7 +1846,7 @@
           return true
         }
 
-        setFeedback(consumed.kind === 'red' ? 'Orca ate a red fish' : 'Orca ate a fish')
+        setFeedback(isPoison ? 'Orca ate a poison fish' : 'Orca ate a fish')
         return false
       }
 
@@ -1913,12 +1944,12 @@
 
         const shark = sharkCatalog[state.selectedShark]
         const caught = state.fish[index]
-        const isPoison = caught.kind === 'red'
+        const isPoison = isPoisonedFish(caught)
         state.fish.splice(index, 1)
         state.fishCaught += 1
         state.fishTotal += 1
 
-        if (caught.kind === 'red') state.redFishCaught += 1
+        if (isPoison) state.redFishCaught += 1
 
         if (isPoison) {
           state.chain = 0
@@ -1934,7 +1965,7 @@
           if (state.chain > 1) {
             setFeedback(`Nice combo x${state.chain}`)
           } else {
-            setFeedback(caught.kind === 'red' ? 'Poisoned fish caught' : 'Fish caught')
+            setFeedback(isPoison ? 'Poisoned fish caught' : 'Fish caught')
           }
         }
 
@@ -2064,18 +2095,20 @@
         if (!state.running || state.paused) return
         state.tick += 1
 
+        const now = performance.now()
         if (state.turnCooldown > 0) state.turnCooldown -= 1
 
-        if (state.fishSpawnPending && performance.now() >= state.fishSpawnAt) {
+        if (state.fishSpawnPending && now >= state.fishSpawnAt) {
           activateFishWave()
         }
 
         attemptPlayerMove()
+        updatePoisonFish(now)
 
         if (
           !state.orcaSpawned &&
           (state.levelStart || state.runStart) &&
-          performance.now() - (state.levelStart || state.runStart) >= (state.orcaSpawnDelayMs || ORCA_SPAWN_DELAY_MS)
+          now - (state.levelStart || state.runStart) >= (state.orcaSpawnDelayMs || ORCA_SPAWN_DELAY_MS)
         ) {
           spawnOrca()
         }
