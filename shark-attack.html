@@ -842,6 +842,8 @@
       const ORCA_SPAWN_DELAY_EASY_MS = 28000
       const FISH_SPAWN_DELAY_MS = 2200
       const FISH_SPAWN_DELAY_EASY_MS = 2800
+      const RED_POISON_WINDOW_MS = 5000
+      const RED_POISON_CYCLE_MS = 30000
       const directions = {
         up: { x: 0, y: -1 },
         down: { x: 0, y: 1 },
@@ -1083,6 +1085,13 @@
 
       function randomInt(max) {
         return Math.floor(Math.random() * max)
+      }
+
+      function isRedPoisonWindow(now = performance.now()) {
+        if (!state.runStart) return false
+        const elapsed = now - state.runStart
+        const phase = Math.floor((elapsed % RED_POISON_CYCLE_MS) / RED_POISON_WINDOW_MS)
+        return phase === 0
       }
 
       function shuffle(items) {
@@ -1373,12 +1382,11 @@
             if (!candidate) break
           }
           if (!candidate) return false
-          const isRed = i === 0
+        const isRed = i === 0
           state.fish.push({
             x: candidate.x,
             y: candidate.y,
             kind: isRed ? 'red' : 'normal',
-            valueMultiplier: isRed ? 5 : 1,
             dir: { x: 0, y: 0 },
           })
           exclude.add(idx(candidate.x, candidate.y))
@@ -1590,6 +1598,41 @@
         }
       }
 
+      function endRunByPoison() {
+        state.running = false
+        state.paused = false
+        state.awaitingNext = false
+        state.orcaSpawned = false
+        warningEl.textContent = ''
+        if (state.score > state.bestScore) {
+          state.bestScore = state.score
+        }
+        bestScoreEl.textContent = String(state.bestScore)
+        resultTitle.textContent = 'Poisoned'
+        resultText.textContent = `A red fish poisoned the shark on level ${state.level}.`
+        resultSub.innerHTML = `You can restart the run for another try.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
+        overlay.classList.add('show')
+      }
+
+      function loseLifeByPoison() {
+        state.playerLives -= 1
+        setFeedback(`Poison hit. Lives left: ${state.playerLives}`, 1700)
+        warningEl.textContent = 'Poison fish hit you. Avoid red fish on timer.'
+        state.orcaWarned = false
+        state.chain = 0
+        if (state.playerLives <= 0) {
+          endRunByPoison()
+          return true
+        }
+        state.player = state.playerStart ? { ...state.playerStart } : { x: 1, y: 1 }
+        if (state.orca) {
+          resetOrcaAfterLifeLoss()
+        } else {
+          spawnOrca()
+        }
+        return false
+      }
+
       function setFeedback(message, ttlMs = 1300) {
         state.feedbackText = message
         state.feedbackUntil = performance.now() + ttlMs
@@ -1657,7 +1700,7 @@
           const fishTile = state.tileEls[tileIndex(fish.x, fish.y)]
           fishTile.classList.add('fish')
           fishTile.classList.toggle('fish-coming', state.fishSpawnPending)
-          fishTile.classList.toggle('red', fish.kind === 'red')
+          fishTile.classList.toggle('red', fish.kind === 'red' && isRedPoisonWindow())
           fishTile.innerHTML = '<span class="entity"></span>'
         }
 
@@ -1792,18 +1835,29 @@
 
         const shark = sharkCatalog[state.selectedShark]
         const caught = state.fish[index]
+        const isPoison = caught.kind === 'red' && isRedPoisonWindow()
         state.fish.splice(index, 1)
         state.fishCaught += 1
         state.fishTotal += 1
+
         if (caught.kind === 'red') state.redFishCaught += 1
-        state.chain += 1
-        state.orcaPressure = Math.floor(state.fishTotal / 2)
-        const reward = 24 + state.level * 4 + shark.fishBonus + state.chain
-        state.fishScore += reward * (caught.valueMultiplier || 1)
-        if (state.chain > 1) {
-          setFeedback(`Nice combo x${state.chain}`)
+
+        if (isPoison) {
+          state.chain = 0
+          state.orcaPressure = Math.floor(state.fishTotal / 2)
+          const isDead = loseLifeByPoison()
+          if (isDead) return true
+          setFeedback('Poison fish hit, you lost a life')
         } else {
-          setFeedback(`Fish caught`)
+          state.chain += 1
+          state.orcaPressure = Math.floor(state.fishTotal / 2)
+          const reward = 24 + state.level * 4 + shark.fishBonus + state.chain
+          state.fishScore += reward
+          if (state.chain > 1) {
+            setFeedback(`Nice combo x${state.chain}`)
+          } else {
+            setFeedback(caught.kind === 'red' ? 'Red fish avoided poison' : 'Fish caught')
+          }
         }
 
         if (state.fish.length === 0) {
