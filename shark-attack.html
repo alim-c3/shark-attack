@@ -1124,7 +1124,7 @@
 
       function fishGoal(level) {
         const tier = difficultyTiers[state.difficulty] || difficultyTiers.medium
-        const base = 2 + Math.min(4, Math.floor(level / 2))
+        const base = 2 + (level - 1)
         const total = base * state.fishGoalMultiplier * tier.fishGoal
         return Math.max(2, Math.round(total))
       }
