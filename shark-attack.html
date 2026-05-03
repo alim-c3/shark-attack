@@ -684,7 +684,7 @@
   </head>
   <body>
     <div class="wrap">
-      <h1 class="title">Shark Attack</h1>
+      <h1 class="title">Shark Attack 2.0</h1>
       <div class="actions">
         <button id="pause" class="btn" type="button">Pause</button>
         <button id="end-run" class="btn" type="button">End run</button>
@@ -1066,6 +1066,8 @@
         fishIdCounter: 1,
         nextPoisonAt: 0,
         runHighestLevel: 1,
+        pausedTotalMs: 0,
+        pauseStartedAt: 0,
         playerMoveEvery: 2,
         currentDir: { x: 0, y: 0 },
         nextDir: { x: 0, y: 0 },
@@ -1097,6 +1099,11 @@
         return Math.floor(Math.random() * max)
       }
 
+      function gameTime(now = performance.now()) {
+        const pausedElapsed = state.pausedTotalMs + (state.paused ? now - state.pauseStartedAt : 0)
+        return now - pausedElapsed
+      }
+
       function shortestDistanceToPlayer(start) {
         if (!state.player) return Infinity
         const targetKey = idx(state.player.x, state.player.y)
@@ -1124,11 +1131,11 @@
         return Infinity
       }
 
-      function isPoisonedFish(fish, now = performance.now()) {
+      function isPoisonedFish(fish, now = gameTime()) {
         return fish && fish.poisonUntil != null && now < fish.poisonUntil
       }
 
-      function clearExpiredPoison(now = performance.now()) {
+      function clearExpiredPoison(now = gameTime()) {
         if (!state.fish.length) return
         for (const fish of state.fish) {
           if (fish.poisonUntil && now >= fish.poisonUntil) {
@@ -1137,7 +1144,7 @@
         }
       }
 
-      function updatePoisonFish(now = performance.now()) {
+      function updatePoisonFish(now = gameTime()) {
         clearExpiredPoison(now)
         if (now < state.nextPoisonAt) return
 
@@ -1188,8 +1195,8 @@
         const growth = Math.floor((level - 1) / 2)
         const compact = window.innerWidth < 860
         const ease = state.easyMode ? -1 : 0
-        let rows = (compact ? 15 : 13) + growth + ease
-        let cols = (compact ? 18 : 25) + growth + ease
+        let rows = (compact ? 15 : 11) + growth + ease
+        let cols = (compact ? 18 : 21) + growth + ease
         if (rows % 2 === 0) rows += 1
         if (cols % 2 === 0) cols += 1
         return { rows, cols }
@@ -1210,7 +1217,7 @@
       }
 
       function formatRunSummaryText() {
-        const elapsedMs = state.runStart ? performance.now() - state.runStart : 0
+        const elapsedMs = state.runStart ? gameTime() - state.runStart : 0
         const totalSec = Math.max(0, Math.floor(elapsedMs / 1000))
         const mins = Math.floor(totalSec / 60)
         const secs = String(totalSec % 60).padStart(2, '0')
@@ -1219,14 +1226,14 @@
 
       function queueFishArrival() {
         state.fishSpawnDelayMs = state.easyMode ? FISH_SPAWN_DELAY_EASY_MS : FISH_SPAWN_DELAY_MS
-        state.fishSpawnAt = performance.now() + state.fishSpawnDelayMs
+        state.fishSpawnAt = gameTime() + state.fishSpawnDelayMs
         state.fishSpawnPending = true
       }
 
       function updateFishSpawnHint() {
         if (!fishSpawnHintEl) return
         if (state.fishSpawnPending && state.fishSpawnAt) {
-          const seconds = Math.max(0, Math.ceil((state.fishSpawnAt - performance.now()) / 1000))
+          const seconds = Math.max(0, Math.ceil((state.fishSpawnAt - gameTime()) / 1000))
           fishSpawnHintEl.classList.add('show')
           fishSpawnHintEl.textContent = `New fish arrive in ${seconds}s`
         } else {
@@ -1244,9 +1251,9 @@
       }
 
       function applyEntityScale() {
-        const sharkSize = state.easyMode ? 220 : 240
-        const fishSize = state.easyMode ? 205 : 225
-        const orcaSize = state.easyMode ? 220 : 235
+        const sharkSize = state.easyMode ? 250 : 280
+        const fishSize = state.easyMode ? 230 : 260
+        const orcaSize = state.easyMode ? 250 : 275
         board.style.setProperty('--shark-size', `${sharkSize}%`)
         board.style.setProperty('--fish-size', `${fishSize}%`)
         board.style.setProperty('--orca-size', `${orcaSize}%`)
@@ -1413,6 +1420,8 @@
           }
         }
 
+        state.fish = []
+
         const candidateStart = randomOpenFromSet(openSet)
         if (!candidateStart) return false
         state.player = candidateStart
@@ -1423,10 +1432,11 @@
         const reachable = collectReachable(state.player)
         const need = fishGoal(state.level)
         if (reachable.size < need + 6) return false
+        if (need <= 0) return false
 
         const exclude = new Set([idx(state.player.x, state.player.y)])
         const fishZones = chooseZones(reachable, Math.min(3, need))
-        state.fish = []
+        if (!fishZones.length) return false
 
         let guard = 0
         for (let i = 0; i < need; i++) {
@@ -1434,7 +1444,10 @@
           let candidate = randomOpenFromSet(reachable, exclude)
           if (!candidate) return false
           let retries = 0
-        while (retries < 22 && (manhattan(candidate, state.player) < 2 || manhattan(candidate, zone) > 4 && manhattan(candidate, zone) < 12)) {
+          while (
+            retries < 22 &&
+            (manhattan(candidate, state.player) < 2 || (manhattan(candidate, zone) > 4 && manhattan(candidate, zone) < 12))
+          ) {
             candidate = randomOpenFromSet(reachable, exclude)
             retries++
             if (!candidate) break
@@ -1457,6 +1470,15 @@
         return true
       }
 
+      function makeFallbackOpenBoard() {
+        for (let y = 1; y < state.rows - 1; y++) {
+          for (let x = 1; x < state.cols - 1; x++) {
+            state.maze[y][x] = 0
+          }
+        }
+        ensureOpen()
+      }
+
       function startLevel() {
         initBoardGrid()
         let attempts = 0
@@ -1471,9 +1493,21 @@
         }
         if (!ok) {
           clearToWalls()
-          addCorridorPaths()
-          ensureOpen()
-          placeEntities()
+          makeFallbackOpenBoard()
+          ok = placeEntities()
+        }
+        if (!ok) {
+          clearToWalls()
+          makeFallbackOpenBoard()
+          const fallbackPlaced = placeEntities()
+          if (!fallbackPlaced) {
+            const safeX = Math.min(state.cols - 2, 2)
+            const safeY = Math.min(state.rows - 2, 2)
+            state.player = { x: 1, y: 1 }
+            state.playerStart = { x: 1, y: 1 }
+            state.fish = [{ x: safeX, y: safeY, kind: 'normal', id: state.fishIdCounter, dir: { x: 0, y: 0 } }]
+            state.fishIdCounter += 1
+          }
         }
 
         state.fishGoal = fishGoal(state.level)
@@ -1488,11 +1522,12 @@
         state.nextDir = { x: 0, y: 0 }
         state.turnCooldown = 0
         state.orcaDir = { x: 0, y: 0 }
-        state.nextPoisonAt = performance.now() + POISON_INTERVAL_MS
+        state.nextPoisonAt = gameTime() + POISON_INTERVAL_MS
         state.fish.forEach((fish) => {
           if (fish.poisonUntil) delete fish.poisonUntil
         })
         setupDifficulty()
+        return true
       }
 
       function setupDifficulty() {
@@ -1525,7 +1560,7 @@
 
         state.orca = best
         state.orcaSpawned = true
-        state.orcaSpawnTime = performance.now()
+        state.orcaSpawnTime = gameTime()
         state.orcaWarned = false
         state.orcaMoveCounter = 0
         state.orcaDir = { x: 0, y: 0 }
@@ -1729,7 +1764,7 @@
 
       function setFeedback(message, ttlMs = 1300) {
         state.feedbackText = message
-        state.feedbackUntil = performance.now() + ttlMs
+        state.feedbackUntil = gameTime() + ttlMs
       }
 
       function endRunByOrca() {
@@ -1774,7 +1809,7 @@
 
       function render() {
         warningEl.textContent = ''
-        const now = performance.now()
+        const now = gameTime()
 
         for (let y = 0; y < state.rows; y++) {
           for (let x = 0; x < state.cols; x++) {
@@ -1839,10 +1874,9 @@
           state.orca = null
           state.orcaWarned = false
           state.orcaMoveCounter = 0
-          state.orcaMoveEvery = 0
           state.orcaSpawnTime = 0
           state.orcaDir = { x: 0, y: 0 }
-          state.levelStart = performance.now()
+          state.levelStart = gameTime()
         } else {
           setFeedback('Orca ate a fish')
         }
@@ -1852,7 +1886,7 @@
       }
 
       function updateHUD() {
-        const elapsed = state.runStart ? Math.floor((performance.now() - state.runStart) / 1000) : 0
+        const elapsed = state.runStart ? Math.floor((gameTime() - state.runStart) / 1000) : 0
         state.score = state.fishScore + state.levelScore + Math.floor(elapsed / 2)
         scoreEl.textContent = String(state.score)
         if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
@@ -1862,7 +1896,7 @@
         livesEl.textContent = String(state.playerLives)
         const remainingFish = Math.max(0, state.fish.length)
         let statusText = `Fish ${remainingFish} / ${state.fishGoal}`
-        const now = performance.now()
+        const now = gameTime()
         if (state.orcaSpawned) statusText = `${statusText} · Orca hunting`
         if (state.orca && state.player) {
           const dist = manhattan(state.orca, state.player)
@@ -2029,8 +2063,10 @@
           state.feedbackUntil = 0
           if (state.runHighestLevel < state.level) state.runHighestLevel = state.level
         }
-        state.runStart = performance.now()
-        state.levelStart = performance.now()
+        state.runStart = gameTime()
+        state.levelStart = gameTime()
+        state.pausedTotalMs = 0
+        state.pauseStartedAt = 0
         state.running = true
         state.paused = false
         state.awaitingNext = false
@@ -2042,7 +2078,15 @@
         menu.classList.remove('show')
         overlay.classList.remove('show')
 
-        startLevel()
+        const levelReady = startLevel()
+        if (!levelReady) {
+          state.running = false
+          resultTitle.textContent = 'Area failed to load'
+          resultText.textContent = 'This level was too crowded to place all fish. Press Start again to retry.'
+          resultSub.textContent = `Try a lower difficulty or fewer fish for this session.`
+          overlay.classList.add('show')
+          return
+        }
         queueFishArrival()
         render()
         updateHUD()
@@ -2069,10 +2113,19 @@
         state.level += 1
         if (state.level > state.runHighestLevel) state.runHighestLevel = state.level
         state.fishCaught = 0
-        state.levelStart = performance.now()
+        state.levelStart = gameTime()
         state.fishSpawnPending = false
         state.fishSpawnAt = 0
-        startLevel()
+        const levelReady = startLevel()
+        if (!levelReady) {
+          state.running = false
+          state.awaitingNext = false
+          resultTitle.textContent = 'Area failed to load'
+          resultText.textContent = 'This level was too crowded to place all fish. Start again to retry.'
+          resultSub.textContent = `Try a lower fish goal or ease mode from the menu.`
+          overlay.classList.add('show')
+          return
+        }
         queueFishArrival()
         overlay.classList.remove('show')
         render()
@@ -2106,7 +2159,7 @@
         if (!state.running || state.paused) return
         state.tick += 1
 
-        const now = performance.now()
+        const now = gameTime()
         if (state.turnCooldown > 0) state.turnCooldown -= 1
 
         if (state.fishSpawnPending && now >= state.fishSpawnAt) {
@@ -2254,14 +2307,35 @@
       endRunButton.addEventListener('click', endRun)
       pauseButton.addEventListener('click', () => {
         if (!state.running) return
-        state.paused = !state.paused
-        pauseButton.textContent = state.paused ? 'Resume' : 'Pause'
+        const now = performance.now()
+        if (!state.paused) {
+          state.paused = true
+          state.pauseStartedAt = now
+          pauseButton.textContent = 'Resume'
+          return
+        }
+
+        state.paused = false
+        if (state.pauseStartedAt) {
+          state.pausedTotalMs += now - state.pauseStartedAt
+          state.pauseStartedAt = 0
+        }
+        pauseButton.textContent = 'Pause'
       })
 
       window.addEventListener('resize', () => {
         if (state.running) {
           initBoardGrid()
-          startLevel()
+          const levelReady = startLevel()
+          if (!levelReady) {
+            state.running = false
+            state.awaitingNext = false
+            resultTitle.textContent = 'Area failed to load'
+            resultText.textContent = 'Board sizing changed while running and this level could not place all fish.'
+            resultSub.textContent = 'Tap Start run again from the menu.'
+            overlay.classList.add('show')
+            return
+          }
           render()
           updateHUD()
         } else {
