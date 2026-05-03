@@ -1069,6 +1069,8 @@
         nextDir: { x: 0, y: 0 },
         turnCooldown: 0,
         orcaDir: { x: 0, y: 0 },
+        resumeAfterSharkChange: false,
+        resumeSharkLevel: 1,
       }
 
       let lastTouch = null
@@ -1911,7 +1913,7 @@
 
         const shark = sharkCatalog[state.selectedShark]
         const caught = state.fish[index]
-        const isPoison = caught.kind === 'red' && isRedPoisonWindow()
+        const isPoison = caught.kind === 'red'
         state.fish.splice(index, 1)
         state.fishCaught += 1
         state.fishTotal += 1
@@ -1932,7 +1934,7 @@
           if (state.chain > 1) {
             setFeedback(`Nice combo x${state.chain}`)
           } else {
-            setFeedback(caught.kind === 'red' ? 'Red fish avoided poison' : 'Fish caught')
+            setFeedback(caught.kind === 'red' ? 'Poisoned fish caught' : 'Fish caught')
           }
         }
 
@@ -1955,22 +1957,36 @@
 
       function startRun() {
         syncSettings()
-        state.level = 1
-        state.fishGoal = fishGoal(state.level)
-        state.fishTotal = 0
-        state.fishWallBypass = 0
-        state.fishScore = 0
-        state.levelScore = 0
-        state.score = 0
-        state.fishCaught = 0
-        state.chain = 0
-        state.orcaPressure = 0
-        state.playerLives = 2
-        state.orcaWarned = false
-        state.feedbackText = ''
-        state.feedbackUntil = 0
-        state.redFishCaught = 0
-        state.runHighestLevel = 1
+        const resumeProgress = state.resumeAfterSharkChange
+        if (!resumeProgress) {
+          state.level = 1
+          state.fishGoal = fishGoal(state.level)
+          state.fishTotal = 0
+          state.fishWallBypass = 0
+          state.fishScore = 0
+          state.levelScore = 0
+          state.score = 0
+          state.fishCaught = 0
+          state.chain = 0
+          state.orcaPressure = 0
+          state.playerLives = 2
+          state.orcaWarned = false
+          state.feedbackText = ''
+          state.feedbackUntil = 0
+          state.redFishCaught = 0
+          state.runHighestLevel = 1
+        } else {
+          state.level = state.resumeSharkLevel
+          state.fishGoal = fishGoal(state.level)
+          state.fishCaught = 0
+          state.fishWallBypass = 0
+          state.chain = 0
+          state.orcaPressure = 0
+          state.orcaWarned = false
+          state.feedbackText = ''
+          state.feedbackUntil = 0
+          if (state.runHighestLevel < state.level) state.runHighestLevel = state.level
+        }
         state.runStart = performance.now()
         state.levelStart = performance.now()
         state.running = true
@@ -1979,6 +1995,7 @@
         state.fishSpawnPending = false
         state.fishSpawnAt = 0
         state.tick = 0
+        state.resumeAfterSharkChange = false
         pauseButton.textContent = 'Pause'
         menu.classList.remove('show')
         overlay.classList.remove('show')
@@ -2158,6 +2175,14 @@
       })
 
       changeSharkButton.addEventListener('click', () => {
+        if (state.awaitingNext) {
+          state.resumeAfterSharkChange = true
+          state.resumeSharkLevel = state.level + 1
+          state.awaitingNext = false
+          overlay.classList.remove('show')
+          menu.classList.add('show')
+          return
+        }
         state.running = false
         state.paused = false
         state.awaitingNext = false
@@ -2166,6 +2191,14 @@
       })
 
       backToMenuButton.addEventListener('click', () => {
+        if (state.awaitingNext) {
+          state.resumeAfterSharkChange = true
+          state.resumeSharkLevel = state.level + 1
+          state.awaitingNext = false
+          overlay.classList.remove('show')
+          menu.classList.add('show')
+          return
+        }
         state.running = false
         state.paused = false
         state.awaitingNext = false
