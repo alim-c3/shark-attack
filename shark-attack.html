@@ -1843,10 +1843,11 @@
           state.orcaSpawnTime = 0
           state.orcaDir = { x: 0, y: 0 }
           state.levelStart = performance.now()
-          return true
+        } else {
+          setFeedback('Orca ate a fish')
         }
 
-        setFeedback(isPoison ? 'Orca ate a poison fish' : 'Orca ate a fish')
+        checkForLevelClear('orca')
         return false
       }
 
@@ -1937,6 +1938,29 @@
         state.fish = nextFish
       }
 
+      function checkForLevelClear(cause = 'player') {
+        if (state.fish.length > 0) return false
+
+        state.running = false
+        state.awaitingNext = true
+        state.levelScore += 35 + state.level * 20
+
+        const levelText =
+          cause === 'orca'
+            ? `All fish removed from the area on level ${state.level}`
+            : `You caught ${state.fishCaught} fish on level ${state.level}`
+
+        setFeedback(`${levelText}. Area clear!`)
+        const title = 'Area clear'
+        resultTitle.textContent = title
+        resultText.textContent = `${levelText}. Nice chase.`
+        resultSub.textContent = `Next up: level ${state.level + 1}. Your score is now ${state.fishScore + state.levelScore}.`
+        if (state.score > state.bestScore) state.bestScore = state.score
+        if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
+        overlay.classList.add('show')
+        return true
+      }
+
       function collectIfOnFish() {
         if (state.fishSpawnPending) return false
         const index = state.fish.findIndex((fish) => fish.x === state.player.x && fish.y === state.player.y)
@@ -1969,20 +1993,7 @@
           }
         }
 
-        if (state.fish.length === 0) {
-          state.running = false
-          state.awaitingNext = true
-          state.levelScore += 35 + state.level * 20
-          const levelText = `You caught ${state.fishCaught} fish on level ${state.level}`
-          setFeedback(`${levelText}. Area clear!`)
-          const title = 'Area clear'
-          resultTitle.textContent = title
-          resultText.textContent = `${levelText}. Nice chase.`
-          resultSub.textContent = `Next up: level ${state.level + 1}. Your score is now ${state.fishScore + state.levelScore}.`
-          if (state.score > state.bestScore) state.bestScore = state.score
-          if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
-          overlay.classList.add('show')
-        }
+        checkForLevelClear('player')
         return true
       }
 
