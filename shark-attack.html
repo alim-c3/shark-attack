@@ -80,7 +80,7 @@
       .hud {
         display: grid;
         grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 6px;
+        gap: 4px;
         justify-content: space-between;
         align-items: stretch;
       }
@@ -98,20 +98,20 @@
         min-width: 0;
         background: linear-gradient(180deg, rgba(8, 28, 44, 0.92), rgba(8, 23, 34, 0.92));
         border: 2px solid #3bc9dd;
-        border-radius: 16px;
-        padding: 6px 8px;
+        border-radius: 12px;
+        padding: 4px 6px;
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       }
 
       .panel .label {
-        font-size: 11px;
+        font-size: 10px;
         color: #def1ff;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
 
       .panel .value {
         color: var(--glow);
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
       }
 
@@ -521,6 +521,11 @@
         color: #bcd3e8;
       }
 
+      .panel .small {
+        font-size: 9px;
+        line-height: 1.1;
+      }
+
       .fish-spawn-hint {
         position: absolute;
         left: 50%;
@@ -594,7 +599,8 @@
         }
 
         .hud {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 3px;
         }
 
         .panel {
