@@ -79,10 +79,11 @@
 
       .hud {
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 4px;
         justify-content: space-between;
         align-items: stretch;
+        width: 100%;
       }
 
       .details-below {
@@ -90,8 +91,11 @@
         color: #f5f8ff;
         text-align: center;
         font-size: 11px;
-        line-height: 1.35;
+        line-height: 1.1;
         min-height: 1.4em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .panel {
@@ -761,33 +765,15 @@
           <div class="value" id="fish-progress">0 / 3</div>
         </div>
         <div class="panel">
-          <div class="label">Best</div>
-          <div class="value" id="best-score">0</div>
-        </div>
-        <div class="panel">
           <div class="label">Lives</div>
           <div class="value" id="lives">2</div>
-        </div>
-        <div class="panel">
-          <div class="label">Shark power</div>
-          <div class="value" id="shark-power-icon">🦈</div>
-          <p class="small" id="shark-power-text" style="margin: 0; margin-top: 4px">Balanced hunter</p>
         </div>
         <div class="panel">
           <div class="label">Time</div>
           <div class="value" id="run-time">0</div>
         </div>
-        <div class="panel">
-          <div class="label">Difficulty</div>
-          <div class="value" id="difficulty">Easy</div>
-        </div>
-        <div class="panel">
-          <div class="label">Shark</div>
-          <div class="value" id="shark-name">Tiger</div>
-        </div>
       </div>
       <p class="details-below" id="stats-details"></p>
-      <p class="details-below" id="run-feedback"></p>
       <div class="pad">
         <button id="up" type="button" aria-label="Move up">↑</button>
         <button id="left" type="button" aria-label="Move left">←</button>
@@ -805,12 +791,7 @@
       const bestScoreEl = document.getElementById('best-score')
       const livesEl = document.getElementById('lives')
       const runTimeEl = document.getElementById('run-time')
-      const difficultyEl = document.getElementById('difficulty')
-      const sharkNameEl = document.getElementById('shark-name')
-      const sharkPowerIconEl = document.getElementById('shark-power-icon')
-      const sharkPowerTextEl = document.getElementById('shark-power-text')
       const statsDetailsEl = document.getElementById('stats-details')
-      const feedbackEl = document.getElementById('run-feedback')
       const warningEl = document.getElementById('warning')
       const fishSpawnHintEl = document.getElementById('fish-spawn-hint')
       const menu = document.getElementById('menu')
@@ -836,6 +817,8 @@
       const downBtn = document.getElementById('down')
       const leftBtn = document.getElementById('left')
       const rightBtn = document.getElementById('right')
+      const sharkPowerIconEl = null
+      const sharkPowerTextEl = null
 
       const baseLoopMs = 120
       const ORCA_SPAWN_DELAY_MS = 20000
@@ -1063,6 +1046,7 @@
         currentDir: { x: 0, y: 0 },
         nextDir: { x: 0, y: 0 },
         turnCooldown: 0,
+        orcaDir: { x: 0, y: 0 },
       }
 
       let lastTouch = null
@@ -1085,6 +1069,33 @@
 
       function randomInt(max) {
         return Math.floor(Math.random() * max)
+      }
+
+      function shortestDistanceToPlayer(start) {
+        if (!state.player) return Infinity
+        const targetKey = idx(state.player.x, state.player.y)
+        const queue = [{ ...start }]
+        const distanceMap = new Map()
+        distanceMap.set(idx(start.x, start.y), 0)
+
+        for (let head = 0; head < queue.length; head += 1) {
+          const current = queue[head]
+          const currentKey = idx(current.x, current.y)
+          const distance = distanceMap.get(currentKey)
+          if (currentKey === targetKey) return distance
+          for (const dir of Object.values(directions)) {
+            const nx = current.x + dir.x
+            const ny = current.y + dir.y
+            if (!inBounds(nx, ny)) continue
+            if (state.maze[ny][nx] === 1) continue
+            const key = idx(nx, ny)
+            if (distanceMap.has(key)) continue
+            distanceMap.set(key, distance + 1)
+            queue.push({ x: nx, y: ny })
+          }
+        }
+
+        return Infinity
       }
 
       function isRedPoisonWindow(now = performance.now()) {
@@ -1427,6 +1438,7 @@
         state.currentDir = { x: 0, y: 0 }
         state.nextDir = { x: 0, y: 0 }
         state.turnCooldown = 0
+        state.orcaDir = { x: 0, y: 0 }
         setupDifficulty()
       }
 
@@ -1463,6 +1475,7 @@
         state.orcaSpawnTime = performance.now()
         state.orcaWarned = false
         state.orcaMoveCounter = 0
+        state.orcaDir = { x: 0, y: 0 }
         warningEl.textContent = 'An orca has entered the area and is hunting you.'
       }
 
@@ -1515,6 +1528,7 @@
           state.orca = pick
           state.orcaWarned = false
           state.orcaMoveCounter = 0
+          state.orcaDir = { x: 0, y: 0 }
         }
       }
 
@@ -1526,8 +1540,9 @@
           const ny = state.orca.y + dir.y
           if (!inBounds(nx, ny)) continue
           if (state.maze[ny][nx] === 1) continue
-          const distance = manhattan({ x: nx, y: ny }, state.player)
-          candidates.push({ x: nx, y: ny, distance })
+          const pathDistance = shortestDistanceToPlayer({ x: nx, y: ny })
+          const manhattanDistance = manhattan({ x: nx, y: ny }, state.player)
+          candidates.push({ x: nx, y: ny, pathDistance, manhattanDistance })
         }
 
         if (!candidates.length) return
@@ -1539,17 +1554,43 @@
           extreme: 0.9,
         }
         const isSmart = Math.random() < (smartChance[state.difficulty] || 0.65)
-        let bestDistance = candidates[0].distance
-        for (const candidate of candidates) {
-          if (candidate.distance < bestDistance) {
-            bestDistance = candidate.distance
+        let chosen
+
+        if (isSmart) {
+          const reachable = candidates.filter((candidate) => candidate.pathDistance !== Infinity)
+          const validChoices = reachable.length ? reachable : candidates
+          let bestDistance = validChoices[0].pathDistance
+          for (const option of validChoices) {
+            if (option.pathDistance < bestDistance) {
+              bestDistance = option.pathDistance
+            }
           }
+          let bestChoices = validChoices.filter((candidate) => candidate.pathDistance === bestDistance)
+          const avoidReverse = bestChoices.filter(
+            (candidate) => !(candidate.x - state.orca.x === -state.orcaDir.x && candidate.y - state.orca.y === -state.orcaDir.y),
+          )
+          if (avoidReverse.length) {
+            bestChoices = avoidReverse
+          }
+          bestChoices.sort((a, b) => a.manhattanDistance - b.manhattanDistance)
+          chosen = bestChoices[randomInt(bestChoices.length)]
+        } else {
+          const straightChoices = candidates.filter(
+            (candidate) => !(candidate.x - state.orca.x === -state.orcaDir.x && candidate.y - state.orca.y === -state.orcaDir.y),
+          )
+          const pool = straightChoices.length ? straightChoices : candidates
+          chosen = pool[randomInt(pool.length)]
         }
 
-        const bestOptions = candidates.filter((candidate) => candidate.distance === bestDistance)
-        const chosen = isSmart || bestOptions.length === 1 ? bestOptions[randomInt(bestOptions.length)] : candidates[randomInt(candidates.length)]
+        if (!chosen) {
+          chosen = candidates[randomInt(candidates.length)]
+        }
+
+        const prevOrcaX = state.orca.x
+        const prevOrcaY = state.orca.y
         state.orca.x = chosen.x
         state.orca.y = chosen.y
+        state.orcaDir = { x: state.orca.x - prevOrcaX, y: state.orca.y - prevOrcaY }
       }
 
       function checkOrcaCatch() {
@@ -1607,7 +1648,7 @@
         if (state.score > state.bestScore) {
           state.bestScore = state.score
         }
-        bestScoreEl.textContent = String(state.bestScore)
+        if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
         resultTitle.textContent = 'Poisoned'
         resultText.textContent = `A red fish poisoned the shark on level ${state.level}.`
         resultSub.innerHTML = `You can restart the run for another try.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
@@ -1647,7 +1688,7 @@
         if (state.score > state.bestScore) {
           state.bestScore = state.score
         }
-        bestScoreEl.textContent = String(state.bestScore)
+        if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
         resultTitle.textContent = 'Shark hunted'
         resultText.textContent = `The orca has caught the shark on level ${state.level}.`
         resultSub.innerHTML = `You can restart the run for a fresh chase.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
@@ -1726,44 +1767,25 @@
         const elapsed = state.runStart ? Math.floor((performance.now() - state.runStart) / 1000) : 0
         state.score = state.fishScore + state.levelScore + Math.floor(elapsed / 2)
         scoreEl.textContent = String(state.score)
-        bestScoreEl.textContent = String(state.bestScore)
+        if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
         levelEl.textContent = String(state.level)
         fishProgressEl.textContent = `${state.fishCaught} / ${state.fishGoal}`
-        updateSharkPowerHUD()
         runTimeEl.textContent = `${elapsed}s`
-        const tier = difficultyTiers[state.difficulty] || difficultyTiers.medium
-        difficultyEl.textContent = `${tier.label} · ${state.fishGoalMultiplier}x fish · ${state.fishSpeedMultiplier}x fish speed`
-        const power = activeSharkPower()
-        sharkNameEl.textContent = `${sharkCatalog[state.selectedShark].name} ${power.icon}`
         livesEl.textContent = String(state.playerLives)
-        let fishTimer = state.fishSpawnPending ? `Fish in ${Math.max(0, Math.ceil((state.fishSpawnAt - performance.now()) / 1000))}s` : 'Fish active'
-        let orcaTimer = 'Press start to begin'
-        if (state.running) {
-          if (state.orcaSpawned) {
-            orcaTimer = 'Orca is hunting'
-          } else if (state.levelStart || state.runStart) {
-            orcaTimer = `Orca starts in ${Math.max(
-              0,
-              Math.ceil((state.orcaSpawnDelayMs - (performance.now() - (state.levelStart || state.runStart))) / 1000),
-            )}s`
-          } else {
-            orcaTimer = `Orca starts in ${Math.ceil(state.orcaSpawnDelayMs / 1000)}s`
-          }
-        }
-        const chainText = state.chain > 1 ? ` · Chain ${state.chain}` : ''
-        statsDetailsEl.textContent = `Total fish ${state.fishTotal} · Remaining ${Math.max(0, state.fish.length)}${chainText} · ${fishTimer} · ${orcaTimer}`
+        const remainingFish = Math.max(0, state.fish.length)
+        let statusText = `Fish ${remainingFish} / ${state.fishGoal}`
         const now = performance.now()
-        let feedback = ''
+        if (state.orcaSpawned) statusText = `${statusText} · Orca hunting`
         if (state.orca && state.player) {
           const dist = manhattan(state.orca, state.player)
           if (dist <= 2) {
-            feedback = `Orca warning: ${dist === 1 ? 'very close' : 'nearby'}`
+            statusText = `Orca warning: ${dist === 1 ? 'very close' : 'nearby'}`
           }
         }
         if (state.feedbackText && now < state.feedbackUntil) {
-          feedback = state.feedbackText
+          statusText = state.feedbackText
         }
-        feedbackEl.textContent = feedback
+        if (statsDetailsEl) statsDetailsEl.textContent = statusText
       }
 
       function moveFish() {
@@ -1871,7 +1893,7 @@
           resultText.textContent = `${levelText}. Nice chase.`
           resultSub.textContent = `Next up: level ${state.level + 1}. Your score is now ${state.fishScore + state.levelScore}.`
           if (state.score > state.bestScore) state.bestScore = state.score
-          bestScoreEl.textContent = String(state.bestScore)
+          if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
           overlay.classList.add('show')
         }
         return true
@@ -1921,7 +1943,7 @@
         state.awaitingNext = false
         updateHUD()
         if (state.score > state.bestScore) state.bestScore = state.score
-        bestScoreEl.textContent = String(state.bestScore)
+        if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore)
         resultTitle.textContent = 'Run ended'
         resultText.textContent = `You ended the run on level ${state.level}.`
         resultSub.innerHTML = `You can keep fish count, speed, and difficulty for another run.<br><br><strong>Run summary</strong><br>${formatRunSummaryText()}`
